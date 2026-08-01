@@ -734,12 +734,47 @@
     `;
   }
 
+  function motionAllowed() {
+    return !global.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function animateElement(element, keyframes, options) {
+    if (!motionAllowed() || typeof element?.animate !== "function") return;
+    element.animate(keyframes, options);
+  }
+
+  function renderResultsPanel(documentRef, state, animateChange = false) {
+    const resultsPanel = documentRef.getElementById("results-panel");
+    const previousValue = resultsPanel.querySelector(".result-value")?.textContent;
+    const breakdownWasOpen = Boolean(resultsPanel.querySelector(".math-details")?.open);
+    resultsPanel.innerHTML = renderResults(state);
+
+    const details = resultsPanel.querySelector(".math-details");
+    if (breakdownWasOpen && details) details.open = true;
+
+    const resultValue = resultsPanel.querySelector(".result-value");
+    if (animateChange && previousValue !== resultValue?.textContent) {
+      animateElement(resultValue, [
+        { opacity: 0.35, transform: "translateY(4px)" },
+        { opacity: 1, transform: "translateY(0)" }
+      ], {
+        duration: 180,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+      });
+    }
+
+    const totals = computeCumulativeTotals(calculationEntries(state));
+    documentRef.getElementById("live-status").textContent = totals.weightedGPA === null
+      ? "No grades selected."
+      : `Weighted GPA ${formatGPA(totals.weightedGPA)}. Unweighted GPA ${formatGPA(totals.unweightedGPA)}.`;
+  }
+
   function applyTheme(documentRef, state) {
     documentRef.documentElement.dataset.theme = state.theme;
     documentRef.documentElement.style.colorScheme = state.theme;
     documentRef.querySelector('meta[name="theme-color"]')?.setAttribute(
       "content",
-      state.theme === "dark" ? "#101218" : "#f5f6fa"
+      state.theme === "dark" ? "#131310" : "#f4f4f1"
     );
     const themeButton = documentRef.getElementById("theme-toggle");
     if (!themeButton) return;
@@ -749,7 +784,7 @@
     themeButton.title = `Use ${nextTheme} theme`;
   }
 
-  function renderApp(documentRef, state) {
+  function renderApp(documentRef, state, options = {}) {
     applyTheme(documentRef, state);
     documentRef.querySelectorAll("[data-mode]").forEach((button) => {
       const active = button.dataset.mode === state.mode;
@@ -761,12 +796,17 @@
     const workspace = documentRef.getElementById("calculator-workspace");
     workspace.setAttribute("aria-labelledby", `mode-${state.mode}-tab`);
     workspace.innerHTML = state.mode === "single" ? renderSingleWorkspace(state) : renderCumulativeWorkspace(state);
-    documentRef.getElementById("results-panel").innerHTML = renderResults(state);
+    renderResultsPanel(documentRef, state, Boolean(options.animateResults));
 
-    const totals = computeCumulativeTotals(calculationEntries(state));
-    documentRef.getElementById("live-status").textContent = totals.weightedGPA === null
-      ? "No grades selected."
-      : `Weighted GPA ${formatGPA(totals.weightedGPA)}. Unweighted GPA ${formatGPA(totals.unweightedGPA)}.`;
+    if (options.animateWorkspace) {
+      animateElement(workspace, [
+        { opacity: 0.45, transform: "translateY(7px)" },
+        { opacity: 1, transform: "translateY(0)" }
+      ], {
+        duration: 220,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+      });
+    }
   }
 
   function stateContextForTarget(state, target) {
@@ -780,17 +820,67 @@
     return { currentPreset: getPresetById(year.presetId), presetState: getYearPresetState(year), kind: "year" };
   }
 
+  function updateCourseRow(state, target) {
+    const context = stateContextForTarget(state, target);
+    const subjectIndex = Number(target.dataset.subjectIndex);
+    if (!context || !Number.isInteger(subjectIndex)) return;
+
+    if (target.dataset.action === "level") {
+      target.closest(".course-row")?.querySelectorAll('[data-action="level"]').forEach((control) => {
+        if (control === target) return;
+        if (control.type === "radio") control.checked = control.value === target.value;
+        else control.value = target.value;
+      });
+    }
+
+    const selectedInput = context.presetState.inputs[subjectIndex];
+    const isComplete = context.kind === "single"
+      ? Number.isInteger(selectedInput?.scoreIndex)
+      : selectedInput?.scoreIndices.some((scoreIndex) => Number.isInteger(scoreIndex));
+    const courseRow = target.closest(".course-row");
+    courseRow?.classList.toggle("is-complete", Boolean(isComplete));
+
+    if (target.dataset.action === "level") {
+      const currentSubject = context.currentPreset.subjects[subjectIndex];
+      const levelValue = selectedLevel(currentSubject, selectedInput);
+      const courseMeta = courseRow?.querySelector(".course-meta");
+      if (courseMeta) {
+        const yearGrade = context.kind === "single" ? context.currentPreset.grade : Number(target.dataset.yearGrade);
+        courseMeta.innerHTML = `
+          <span>${escapeHtml(levelValue.weight)} credits</span>
+          ${renderUcMarker(currentSubject, context.presetState, subjectIndex, yearGrade)}
+        `;
+      }
+    }
+
+    if (context.kind === "year") {
+      const selectedCount = context.presetState.inputs.reduce((sum, input) => (
+        sum + input.scoreIndices.filter((scoreIndex) => Number.isInteger(scoreIndex)).length
+      ), 0);
+      const summary = target.closest(".year-section")?.querySelector(".year-summary");
+      if (summary) summary.textContent = `${selectedCount}/${context.currentPreset.subjects.length * SEMESTERS.length} semester grades`;
+    }
+  }
+
   function bindUI(documentRef) {
     let state = loadState();
-    const persistAndRender = () => {
+    const persistAndRender = (options = {}) => {
       saveState(state);
-      renderApp(documentRef, state);
+      if (options.resultsOnly) {
+        updateCourseRow(state, options.target);
+        renderResultsPanel(documentRef, state, true);
+        return;
+      }
+      renderApp(documentRef, state, {
+        animateResults: true,
+        animateWorkspace: Boolean(options.animateWorkspace)
+      });
     };
 
     documentRef.querySelectorAll("[data-mode]").forEach((button) => {
       button.addEventListener("click", () => {
         state.mode = button.dataset.mode;
-        persistAndRender();
+        persistAndRender({ animateWorkspace: true });
       });
     });
 
@@ -811,7 +901,8 @@
 
     documentRef.getElementById("theme-toggle").addEventListener("click", () => {
       state.theme = state.theme === "dark" ? "light" : "dark";
-      persistAndRender();
+      saveState(state);
+      applyTheme(documentRef, state);
     });
 
     documentRef.body.addEventListener("click", (event) => {
@@ -844,18 +935,21 @@
       } else {
         return;
       }
-      persistAndRender();
+      persistAndRender({ animateWorkspace: action === "toggle-year" || action === "remove-year" });
     });
 
     documentRef.body.addEventListener("change", (event) => {
       const target = event.target;
       const action = target?.dataset?.action;
       if (!action) return;
+      let renderOptions = {};
 
       if (action === "score-format") {
         state.scoreFormat = target.value === "letter" ? "letter" : "percentage";
+        renderOptions.animateWorkspace = true;
       } else if (action === "single-preset") {
         state.singlePresetId = getPresetById(target.value).id;
+        renderOptions.animateWorkspace = true;
       } else if (action === "year-preset") {
         const grade = Number(target.dataset.yearGrade);
         const year = state.cumulativeYears.find((item) => item.grade === grade);
@@ -863,11 +957,13 @@
         if (!year || !validPreset) return;
         year.presetId = validPreset.id;
         year.byPreset[validPreset.id] ??= createCumulativePresetState(validPreset);
+        renderOptions.animateWorkspace = true;
       } else if (action === "add-year") {
         const grade = Number(target.value);
         if (!CUMULATIVE_GRADES.includes(grade) || state.cumulativeYears.some((year) => year.grade === grade)) return;
         state.cumulativeYears.push(createYearState(grade));
         state.cumulativeYears.sort((a, b) => a.grade - b.grade);
+        renderOptions.animateWorkspace = true;
       } else if (["course-name", "level", "score", "semester-score"].includes(action)) {
         const context = stateContextForTarget(state, target);
         const subjectIndex = Number(target.dataset.subjectIndex);
@@ -875,19 +971,23 @@
 
         if (action === "course-name") {
           context.presetState.nameChoices[subjectIndex] = Number(target.value);
+          renderOptions.animateWorkspace = true;
         } else if (action === "level") {
           context.presetState.inputs[subjectIndex].levelIndex = Number(target.value);
+          renderOptions = { resultsOnly: true, target };
         } else if (action === "score" && context.kind === "single") {
           context.presetState.inputs[subjectIndex].scoreIndex = target.value === "" ? null : Number(target.value);
+          renderOptions = { resultsOnly: true, target };
         } else if (action === "semester-score" && context.kind === "year") {
           const semesterIndex = Number(target.dataset.semesterIndex);
           if (!SEMESTERS[semesterIndex]) return;
           context.presetState.inputs[subjectIndex].scoreIndices[semesterIndex] = target.value === "" ? null : Number(target.value);
+          renderOptions = { resultsOnly: true, target };
         }
       } else {
         return;
       }
-      persistAndRender();
+      persistAndRender(renderOptions);
     });
 
     renderApp(documentRef, state);

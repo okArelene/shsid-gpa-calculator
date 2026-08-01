@@ -1,6 +1,6 @@
 {
   "name": "shsid-gpa-calculator-web",
-  "version": "2.2.3",
+  "version": "2.3.0",
   "private": true,
   "description": "Private SHSID weighted, unweighted, cumulative, and UC GPA calculator.",
   "scripts": {

@@ -16,6 +16,7 @@ The interface adopts the useful ideas from [GPA Calculator 3](https://github.com
 - Automatic Grade 10–11 A–G inclusion indicators and international AP/IB honors treatment
 - Independent duplicate course slots, local autosave, light/dark themes, and mobile layouts
 - A consistent visual course order: Chinese, English, Maths, natural sciences, then other electives
+- A compact editorial interface with restrained motion and result-only updates during grade entry
 
 Blank grade rows are omitted from every calculation. They are never treated as failing grades.
 
@@ -40,9 +41,9 @@ The site is a planning tool, not an official transcript or admissions prediction
 
 ## Performance strategy
 
-The production engine is deliberately plain static HTML, CSS, and JavaScript. It has no framework runtime, hydration step, package download, web font, analytics script, API dependency, or server-side calculation. The browser downloads the small rule catalog once and every interaction is computed locally.
+The production engine is deliberately plain static HTML, CSS, and JavaScript. It has no framework runtime, hydration step, package download, web font, analytics script, API dependency, or server-side calculation. The browser downloads the small rule catalog once and every interaction is computed locally. Grade and level changes update the result rail in place instead of rebuilding the course workspace, which keeps form focus stable and interaction latency low.
 
-The current first-party HTML, CSS, JavaScript, and SVG total about 95 KB before compression. Keep the uncompressed core below 150 KB unless a measured user-facing improvement justifies exceeding that budget. A static CDN host with compression and long-lived caching is the intended deployment target; the versioned asset URLs make cache updates explicit.
+The current first-party HTML, CSS, JavaScript, and SVG total about 107 KB before compression. Keep the uncompressed core below 150 KB unless a measured user-facing improvement justifies exceeding that budget. A static CDN host with compression and long-lived caching is the intended deployment target; the versioned asset URLs make cache updates explicit.
 
 A service worker and automatic remote catalog updater are intentionally omitted. Both would add stale-data failure modes to a calculator whose numeric rules need to remain transparent and current.
 
