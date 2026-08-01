@@ -80,6 +80,19 @@ test("SHSID weighted maximum follows the selected single or cumulative schedules
   assert.equal(calculator.formatGPA(calculator.shsidWeightedMaximumForState(state)), "4.438");
 });
 
+test("UC GPA is unavailable in single-semester results and remains available cumulatively", () => {
+  const state = calculator.createDefaultState();
+  const singleResults = calculator.renderResults(state);
+  assert.match(singleResults, /Not available for semester/);
+  assert.doesNotMatch(singleResults, /UC unweighted|UC uncapped|UC honors used/);
+
+  state.mode = "cumulative";
+  const cumulativeResults = calculator.renderResults(state);
+  assert.doesNotMatch(cumulativeResults, /Not available for semester/);
+  assert.match(cumulativeResults, /UC capped/);
+  assert.match(cumulativeResults, /UC unweighted/);
+});
+
 test("course rows always render Chinese, English, Maths, Sciences, then other electives", () => {
   const grade10 = calculator.getPresetById("stockshsidgrade10");
   const grade10State = calculator.createSinglePresetState(grade10);

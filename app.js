@@ -678,7 +678,7 @@
   function renderResults(state) {
     const entries = calculationEntries(state);
     const totals = computeCumulativeTotals(entries);
-    const uc = computeUCGPA(entries);
+    const uc = state.mode === "cumulative" ? computeUCGPA(entries) : null;
     const shsidWeightedMaximum = shsidWeightedMaximumForState(state);
     const totalSemesterCount = state.mode === "single" ? 1 : entries.length;
     const contextLabel = state.mode === "single"
@@ -720,12 +720,21 @@
               <dt>Unweighted</dt>
               <dd><strong>${formatGPA(totals.unweightedGPA)}</strong><span>/ ${formatGPA(GPA_SCALE_MAXIMA.unweighted)}</span></dd>
             </div>
-            <div>
-              <dt>UC capped</dt>
-              <dd><strong>${formatGPA(uc.cappedWeighted)}</strong><span>/ ${formatGPA(GPA_SCALE_MAXIMA.ucCapped)}</span></dd>
-            </div>
+            ${state.mode === "single" ? `
+              <div>
+                <dt>UC capped</dt>
+                <dd class="metric-unavailable">Not available for semester</dd>
+              </div>
+            ` : `
+              <div>
+                <dt>UC capped</dt>
+                <dd><strong>${formatGPA(uc.cappedWeighted)}</strong><span>/ ${formatGPA(GPA_SCALE_MAXIMA.ucCapped)}</span></dd>
+              </div>
+            `}
           </dl>
-          <p>SHSID max follows the selected complete schedule. UC max uses ${UC_CAPPED_SCHOOL_MAXIMUM.aGSemesters} counted semesters and all ${UC_CAPPED_SCHOOL_MAXIMUM.honorsPoints} honors points.</p>
+          <p>${state.mode === "single"
+            ? "SHSID max follows the selected complete schedule."
+            : `SHSID max follows the selected complete schedule. UC max uses ${UC_CAPPED_SCHOOL_MAXIMUM.aGSemesters} counted semesters and all ${UC_CAPPED_SCHOOL_MAXIMUM.honorsPoints} honors points.`}</p>
         </section>
 
         <div class="completion-block">
@@ -745,9 +754,11 @@
             ` : ""}
             <dl>
               <div><dt>Semesters counted</dt><dd>${totals.semesterCount}</dd></div>
-              <div><dt>UC unweighted</dt><dd>${formatGPA(uc.unweighted)}</dd></div>
-              <div><dt>UC uncapped</dt><dd>${formatGPA(uc.uncappedWeighted)}</dd></div>
-              <div><dt>UC honors used / earned</dt><dd>${uc.cappedHonorsSemesters}/${uc.honorsSemesters}</dd></div>
+              ${state.mode === "cumulative" ? `
+                <div><dt>UC unweighted</dt><dd>${formatGPA(uc.unweighted)}</dd></div>
+                <div><dt>UC uncapped</dt><dd>${formatGPA(uc.uncappedWeighted)}</dd></div>
+                <div><dt>UC honors used / earned</dt><dd>${uc.cappedHonorsSemesters}/${uc.honorsSemesters}</dd></div>
+              ` : ""}
             </dl>
             <p>${state.mode === "single"
               ? "The SHSID GPA uses the local course-credit table; unweighted courses count equally."
@@ -1062,6 +1073,7 @@
     semesterInputs,
     calculationEntries,
     shsidWeightedMaximumForState,
+    renderResults,
     courseCategory,
     orderedSubjectEntries
   };

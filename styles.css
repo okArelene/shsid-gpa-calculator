@@ -1307,6 +1307,16 @@ select:active {
   font-weight: 620;
 }
 
+.scale-metrics dd.metric-unavailable {
+  max-width: 150px;
+  color: var(--result-muted);
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 620;
+  line-height: 1.35;
+  text-align: right;
+}
+
 .scale-block > p {
   margin: 6px 0 0;
   color: var(--result-muted);
