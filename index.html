@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f6fa">
+    <meta name="description" content="A private SHSID semester, cumulative, unweighted, and UC GPA calculator.">
+    <title>SHSID GPA Calculator</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css?v=2.2.3">
+    <script src="catalog.js?v=2.2.3" defer></script>
+    <script src="app.js?v=2.2.3" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#calculator-workspace">Skip to calculator</a>
+
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#top" aria-label="SHSID GPA Calculator home">
+          <span>SHSID</span>
+          <strong>GPA Calculator</strong>
+        </a>
+        <div class="header-actions">
+          <span class="local-note">Local only</span>
+          <a class="header-link" href="#method">Method</a>
+          <button class="theme-button" id="theme-toggle" type="button" aria-label="Use dark theme" title="Use dark theme">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.2A8.6 8.6 0 0 1 8.8 3.6 8.8 8.8 0 1 0 20.4 15.2Z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="top" class="page-shell">
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="section-label">Unofficial academic tool</p>
+          <h1 id="page-title">GPA calculator</h1>
+        </div>
+        <p>Calculate one semester or combine up to four school years. Your entries stay in this browser.</p>
+      </section>
+
+      <section class="mode-row" aria-labelledby="mode-label">
+        <p id="mode-label">Mode</p>
+        <div class="mode-switch" role="tablist" aria-label="Calculator mode">
+          <button id="mode-single-tab" type="button" role="tab" data-mode="single" aria-controls="calculator-workspace" aria-selected="true" class="is-active">
+            Single semester
+          </button>
+          <button id="mode-cumulative-tab" type="button" role="tab" data-mode="cumulative" aria-controls="calculator-workspace" aria-selected="false" tabindex="-1">
+            Cumulative
+          </button>
+        </div>
+      </section>
+
+      <section class="calculator-layout" aria-label="GPA calculator">
+        <div id="calculator-workspace" role="tabpanel" aria-labelledby="mode-single-tab"></div>
+        <aside class="results-panel" id="results-panel" aria-label="GPA results"></aside>
+      </section>
+
+      <p id="live-status" class="sr-only" role="status" aria-live="polite"></p>
+
+      <section class="method-section" id="method" aria-labelledby="method-heading">
+        <header>
+          <p class="section-label">Method</p>
+          <h2 id="method-heading">Three numbers, three rules.</h2>
+        </header>
+
+        <div class="method-list">
+          <article>
+            <span>01</span>
+            <div>
+              <h3>SHSID weighted</h3>
+              <p>Each semester uses the original course credits and level adjustments. Cumulative mode averages the entered semester GPAs.</p>
+            </div>
+          </article>
+          <article>
+            <span>02</span>
+            <div>
+              <h3>US unweighted</h3>
+              <p>A = 4, B = 3, C = 2, D = 1, F = 0. Courses count equally within each semester; semester GPAs are then averaged.</p>
+            </div>
+          </article>
+          <article>
+            <span>03</span>
+            <div>
+              <h3>UC estimate</h3>
+              <p>Grade 10–11 semester grades marked <strong>* A–G</strong> count automatically. AP and IB levels receive eligible international honors points; school H/H+ and A-Level do not.</p>
+              <a href="https://admission.universityofcalifornia.edu/admission-requirements/first-year-requirements/gpa-requirement.html" target="_blank" rel="noreferrer">Official UC rule ↗</a>
+            </div>
+          </article>
+        </div>
+
+        <p class="catalog-note"><strong>No manual A–G switch.</strong> The indicator comes from the local course catalog, and UC honors treatment follows the selected level.</p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Original calculator by Michel. Web edition with locally versioned rules.</p>
+      <p>No account · no uploads · saved on this device</p>
+    </footer>
+  </body>
+</html>
