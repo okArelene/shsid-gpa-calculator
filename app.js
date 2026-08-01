@@ -139,6 +139,17 @@
     };
   }
 
+  function addCumulativeYear(state, requestedGrade) {
+    const grade = Number(requestedGrade);
+    if (!CUMULATIVE_GRADES.includes(grade) || state.cumulativeYears.some((year) => year.grade === grade)) return false;
+    state.cumulativeYears.forEach((year) => {
+      year.collapsed = true;
+    });
+    state.cumulativeYears.push(createYearState(grade));
+    state.cumulativeYears.sort((first, second) => first.grade - second.grade);
+    return true;
+  }
+
   function preferredTheme() {
     return global.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
@@ -339,7 +350,8 @@
       reset: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M5.5 16a8 8 0 1 0 .6-9.1L4 10"/></svg>',
       trash: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></svg>',
       chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4"/></svg>',
-      plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'
+      plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+      check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>'
     };
     return icons[name] ?? "";
   }
@@ -589,7 +601,7 @@
     const totalCount = currentPreset.subjects.length * SEMESTERS.length;
 
     return `
-      <section class="year-section ${year.collapsed ? "is-collapsed" : ""}" aria-labelledby="year-${year.grade}-heading">
+      <section class="year-section ${year.collapsed ? "is-collapsed" : ""}" data-year-grade="${year.grade}" aria-labelledby="year-${year.grade}-heading">
         <div class="year-header">
           <button class="year-toggle" type="button" data-action="toggle-year" data-year-grade="${year.grade}" aria-expanded="${!year.collapsed}">
             <span class="year-index">${year.grade}</span>
@@ -634,14 +646,20 @@
             <p>Semester 1 and Semester 2 are calculated separately, then averaged.</p>
           </div>
           <div class="cumulative-actions">
-            <label class="add-year-control">
-              ${icon("plus")}
-              <span class="sr-only">Add a school year</span>
-              <select data-action="add-year" ${availableGrades.length === 0 ? "disabled" : ""}>
-                <option value="" hidden>${availableGrades.length === 0 ? "All years added" : "Add year"}</option>
-                ${availableGrades.map((grade) => `<option value="${grade}">Grade ${grade}</option>`).join("")}
-              </select>
-            </label>
+            ${availableGrades.length > 0 ? `
+              <div class="grade-level-picker" role="group" aria-label="Add grade level">
+                <span class="grade-level-picker-label" aria-hidden="true">${icon("plus")}<span>Add grade</span></span>
+                <span class="grade-level-options">
+                  ${availableGrades.map((grade) => `
+                    <button class="grade-level-option" type="button" data-action="add-year" data-year-grade="${grade}" aria-label="Add Grade ${grade}">${grade}</button>
+                  `).join("")}
+                </span>
+              </div>
+            ` : `
+              <div class="grade-level-picker is-complete" aria-label="All grade levels added">
+                ${icon("check")}<span>All grades added</span>
+              </div>
+            `}
             ${renderFormatControl(state, "cumulative")}
             <button class="text-button" type="button" data-action="reset-cumulative">${icon("reset")}<span>Reset all</span></button>
           </div>
@@ -650,7 +668,7 @@
         ${state.cumulativeYears.length === 0 ? `
           <div class="empty-state">
             <p>No school years added.</p>
-            <span>Use “Add year” to begin.</span>
+            <span>Choose a grade level above to begin.</span>
           </div>
         ` : `<div class="year-list">${state.cumulativeYears.map((year) => renderYearCard(year, state)).join("")}</div>`}
       </section>
@@ -815,6 +833,29 @@
         easing: "cubic-bezier(0.22, 1, 0.36, 1)"
       });
     }
+
+    if (Number.isInteger(options.revealYearGrade)) {
+      const yearSection = workspace.querySelector(`.year-section[data-year-grade="${options.revealYearGrade}"]`);
+      const yearToggle = yearSection?.querySelector(".year-toggle");
+      animateElement(yearSection, [
+        { opacity: 0.35, transform: "translateY(-8px)" },
+        { opacity: 1, transform: "translateY(0)" }
+      ], {
+        duration: 220,
+        easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+      });
+      documentRef.getElementById("live-status").textContent = `Grade ${options.revealYearGrade} added.`;
+
+      const revealYear = () => {
+        yearSection?.scrollIntoView({
+          behavior: motionAllowed() ? "smooth" : "auto",
+          block: "nearest"
+        });
+        yearToggle?.focus({ preventScroll: true });
+      };
+      if (typeof global.requestAnimationFrame === "function") global.requestAnimationFrame(revealYear);
+      else revealYear();
+    }
   }
 
   function stateContextForTarget(state, target) {
@@ -881,7 +922,8 @@
       }
       renderApp(documentRef, state, {
         animateResults: true,
-        animateWorkspace: Boolean(options.animateWorkspace)
+        animateWorkspace: Boolean(options.animateWorkspace),
+        revealYearGrade: options.revealYearGrade
       });
     };
 
@@ -940,6 +982,11 @@
         const year = state.cumulativeYears.find((item) => item.grade === grade);
         if (!year) return;
         year.collapsed = !year.collapsed;
+      } else if (action === "add-year") {
+        const grade = Number(target.dataset.yearGrade);
+        if (!addCumulativeYear(state, grade)) return;
+        persistAndRender({ revealYearGrade: grade });
+        return;
       } else {
         return;
       }
@@ -965,12 +1012,6 @@
         if (!year || !validPreset) return;
         year.presetId = validPreset.id;
         year.byPreset[validPreset.id] ??= createCumulativePresetState(validPreset);
-        renderOptions.animateWorkspace = true;
-      } else if (action === "add-year") {
-        const grade = Number(target.value);
-        if (!CUMULATIVE_GRADES.includes(grade) || state.cumulativeYears.some((year) => year.grade === grade)) return;
-        state.cumulativeYears.push(createYearState(grade));
-        state.cumulativeYears.sort((a, b) => a.grade - b.grade);
         renderOptions.animateWorkspace = true;
       } else if (["course-name", "level", "score", "semester-score"].includes(action)) {
         const context = stateContextForTarget(state, target);
@@ -1012,6 +1053,7 @@
     createSinglePresetState,
     createCumulativePresetState,
     createYearState,
+    addCumulativeYear,
     createDefaultState,
     sanitizePresetState: sanitizeSinglePresetState,
     sanitizeSinglePresetState,

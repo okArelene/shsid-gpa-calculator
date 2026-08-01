@@ -247,6 +247,15 @@ test("each cumulative year expands into two calculation entries", () => {
   assert.deepEqual(entries.map((entry) => entry.label), ["Grade 9 · Semester 1", "Grade 9 · Semester 2"]);
 });
 
+test("adding a cumulative grade collapses older years and opens the new one", () => {
+  const state = calculator.createDefaultState();
+  assert.equal(calculator.addCumulativeYear(state, 11), true);
+  assert.deepEqual(state.cumulativeYears.map((year) => year.grade), [9, 11]);
+  assert.equal(state.cumulativeYears.find((year) => year.grade === 9).collapsed, true);
+  assert.equal(state.cumulativeYears.find((year) => year.grade === 11).collapsed, false);
+  assert.equal(calculator.addCumulativeYear(state, 11), false);
+});
+
 test("v2 cumulative grades migrate to Semester 1 without fabricating Semester 2", () => {
   const grade9 = calculator.getPresetById("stockshsidgrade9");
   const legacyInputs = blankInputFor(grade9);

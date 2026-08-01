@@ -286,7 +286,7 @@ svg {
 .theme-button svg,
 .icon-button svg,
 .text-button svg,
-.add-year-control svg,
+.grade-level-picker svg,
 .chevron svg {
   width: 18px;
   height: 18px;
@@ -809,65 +809,75 @@ select:active {
   gap: 6px;
 }
 
-.add-year-control {
-  display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
+.grade-level-picker {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 144px;
+  gap: 3px;
   min-height: 40px;
-  padding-left: 10px;
+  padding: 2px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  color: var(--accent);
   background: var(--surface-soft);
-  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-raised) 70%, transparent);
 }
 
-.add-year-control:hover {
-  border-color: var(--line-strong);
-  background: var(--surface-raised);
-}
-
-.add-year-control:focus-within {
-  outline: 3px solid color-mix(in srgb, var(--focus) 40%, transparent);
-  outline-offset: 2px;
-}
-
-.add-year-control:has(select:disabled) {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
-.add-year-control svg {
-  position: static;
-  color: currentColor;
-  pointer-events: none;
-  transform: none;
-}
-
-.add-year-control select {
-  min-width: 0;
-  min-height: 38px;
-  padding: 0 32px 0 0;
-  border: 0;
-  border-radius: 0;
-  color: inherit;
-  background: transparent;
+.grade-level-picker-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 7px;
+  color: var(--muted);
+  font-size: 0.72rem;
   font-weight: 680;
+  white-space: nowrap;
 }
 
-.add-year-control select:hover {
-  border-color: transparent;
+.grade-level-picker-label svg,
+.grade-level-picker.is-complete svg {
+  width: 15px;
+  height: 15px;
+  color: var(--accent);
+}
+
+.grade-level-options {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.grade-level-option {
+  display: grid;
+  place-items: center;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--ink-soft);
   background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  transition: color 90ms ease-out, background-color 90ms ease-out, transform 90ms ease-out;
 }
 
-.add-year-control select:focus-visible {
-  outline: 0;
+.grade-level-option:hover {
+  color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
-.add-year-control select:disabled {
-  opacity: 1;
+.grade-level-option:active {
+  transform: scale(0.96);
+}
+
+.grade-level-picker.is-complete {
+  gap: 7px;
+  padding: 0 10px;
+  color: var(--muted);
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.72rem;
+  font-weight: 650;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1021,16 +1031,6 @@ select:active {
       color: var(--on-accent);
     }
 
-    .add-year-control select:open {
-      border: 0;
-      background: transparent;
-      box-shadow: none;
-    }
-
-    .add-year-control:has(select:open) {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent);
-    }
   }
 }
 
@@ -1734,6 +1734,20 @@ summary:focus-visible {
 
   .cumulative-actions > * {
     flex: 1 1 140px;
+  }
+
+  .grade-level-picker {
+    flex-basis: 100%;
+    min-height: 44px;
+  }
+
+  .grade-level-options {
+    flex: 1 1 auto;
+  }
+
+  .grade-level-option {
+    flex: 1 1 0;
+    min-height: 44px;
   }
 
   .setup-bar {
