@@ -197,24 +197,24 @@ svg {
 .brand {
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 0.38em;
   min-height: 44px;
   color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 680;
+  letter-spacing: -0.02em;
   text-decoration: none;
 }
 
 .brand span {
   color: var(--accent);
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 750;
-  letter-spacing: 0.12em;
 }
 
+.brand span,
 .brand strong {
-  font-size: 0.9rem;
-  font-weight: 680;
-  letter-spacing: -0.02em;
+  font: inherit;
+  letter-spacing: inherit;
 }
 
 .header-actions {
