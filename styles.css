@@ -1203,6 +1203,10 @@ select:active {
   border-bottom: 0;
 }
 
+.primary-result.is-empty {
+  padding-top: 16px;
+}
+
 .result-value,
 .result-name,
 .primary-result small {
@@ -1223,6 +1227,10 @@ select:active {
   margin-top: 10px;
   font-size: 0.8rem;
   font-weight: 720;
+}
+
+.primary-result.is-empty .result-name {
+  margin-top: 0;
 }
 
 .primary-result small {

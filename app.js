@@ -678,8 +678,8 @@
           <span title="${escapeHtml(CATALOG_META.version)}">Local credit table</span>
         </div>
 
-        <div class="primary-result">
-          <span class="result-value">${formatGPA(totals.weightedGPA)}</span>
+        <div class="primary-result${hasGrades ? "" : " is-empty"}">
+          ${hasGrades ? `<span class="result-value">${formatGPA(totals.weightedGPA)}</span>` : ""}
           <span class="result-name">SHSID weighted</span>
           <small>${hasGrades
             ? state.mode === "single"
