@@ -535,16 +535,24 @@ select {
   min-height: 40px;
   padding: 0 34px 0 11px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--ink);
-  background: var(--surface-soft);
+  background: color-mix(in srgb, var(--surface-soft) 88%, var(--surface-raised));
   font-size: 0.8rem;
-  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-raised) 78%, transparent), var(--shadow-sm);
+  transition: border-color 100ms ease-out, background-color 100ms ease-out, box-shadow 100ms ease-out;
 }
 
 select:hover {
   border-color: var(--line-strong);
   background: var(--surface-raised);
+}
+
+select:active {
+  background: var(--surface-soft);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .format-control {
@@ -698,7 +706,7 @@ select:hover {
   min-height: 38px;
   padding-left: 9px;
   background: var(--surface-soft);
-  font-weight: 680;
+  font-weight: 500;
 }
 
 .course-meta {
@@ -860,6 +868,170 @@ select:hover {
 
 .add-year-control select:disabled {
   opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  @supports (appearance: base-select) {
+    select,
+    ::picker(select) {
+      appearance: base-select;
+    }
+
+    select {
+      align-items: center;
+      padding: 0 9px 0 11px;
+    }
+
+    select::picker-icon {
+      margin-left: auto;
+      color: var(--muted);
+      transition: color 90ms ease-out, transform 120ms var(--ease-out);
+    }
+
+    select:hover::picker-icon,
+    select:open::picker-icon {
+      color: var(--ink);
+    }
+
+    select:open::picker-icon {
+      transform: rotate(180deg);
+    }
+
+    select:open {
+      border-color: var(--accent);
+      background: var(--surface-raised);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent);
+    }
+
+    ::picker(select) {
+      max-height: min(360px, 54vh);
+      margin-top: 6px;
+      padding: 4px;
+      overflow-y: auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 10px;
+      color: var(--ink);
+      background: var(--surface-raised);
+      box-shadow: 0 16px 40px color-mix(in srgb, var(--ink) 18%, transparent), 0 2px 8px color-mix(in srgb, var(--ink) 10%, transparent);
+      opacity: 0;
+      transform: translateY(-4px) scale(0.985);
+      transform-origin: top center;
+      transition:
+        opacity 90ms ease-out,
+        transform 120ms var(--ease-out),
+        display 120ms allow-discrete,
+        overlay 120ms allow-discrete;
+    }
+
+    ::picker(select):popover-open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    @starting-style {
+      ::picker(select):popover-open {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.985);
+      }
+    }
+
+    option {
+      min-height: 32px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      color: var(--ink);
+      background: transparent;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: color 70ms ease-out, background-color 70ms ease-out;
+    }
+
+    option:hover,
+    option:focus {
+      background: var(--surface-soft);
+      outline: 0;
+    }
+
+    option:checked {
+      color: var(--on-accent);
+      background: var(--accent);
+      font-weight: 500;
+    }
+
+    option:checked:hover,
+    option:checked:focus {
+      background: var(--accent-strong);
+    }
+
+    option:disabled {
+      opacity: 0.45;
+    }
+
+    option::checkmark {
+      order: 1;
+      margin-left: auto;
+      color: currentColor;
+      content: "✓";
+      visibility: hidden;
+    }
+
+    option:checked::checkmark {
+      visibility: visible;
+    }
+
+    optgroup {
+      margin: 0;
+      padding: 2px 0;
+      border: 0;
+      color: var(--muted);
+      background: transparent;
+      font-family: var(--font-mono);
+      font-size: 0.56rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    optgroup + optgroup {
+      margin-top: 3px;
+      padding-top: 5px;
+      border-top: 1px solid var(--line);
+    }
+
+    optgroup legend {
+      padding: 4px 8px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.56rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    optgroup option {
+      color: var(--ink);
+      font-family: var(--font-sans);
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      text-transform: none;
+    }
+
+    optgroup option:checked {
+      color: var(--on-accent);
+    }
+
+    .add-year-control select:open {
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .add-year-control:has(select:open) {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent);
+    }
+  }
 }
 
 .year-list {
@@ -1650,5 +1822,14 @@ summary:focus-visible {
     transition-duration: 0.001ms !important;
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+  }
+
+  @supports (appearance: base-select) {
+    select::picker-icon,
+    ::picker(select) {
+      transition-duration: 0.001ms !important;
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+    }
   }
 }

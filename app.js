@@ -348,11 +348,19 @@
     const grades = [...new Set(presets.map((currentPreset) => currentPreset.grade))];
     return grades.map((grade) => {
       const gradePresets = presetsForGrade(grade);
+      if (gradePresets.length === 1) {
+        const currentPreset = gradePresets[0];
+        return `
+          <option value="${escapeHtml(currentPreset.id)}" ${currentPreset.id === selectedId ? "selected" : ""}>
+            ${escapeHtml(currentPreset.name)}
+          </option>
+        `;
+      }
       return `
         <optgroup label="Grade ${grade}">
           ${gradePresets.map((currentPreset) => `
             <option value="${escapeHtml(currentPreset.id)}" ${currentPreset.id === selectedId ? "selected" : ""}>
-              ${escapeHtml(gradePresets.length === 1 ? currentPreset.name : `${currentPreset.name} · ${currentPreset.subtitle}`)}
+              ${escapeHtml(`${currentPreset.name} · ${currentPreset.subtitle}`)}
             </option>
           `).join("")}
         </optgroup>
@@ -630,7 +638,7 @@
               ${icon("plus")}
               <span class="sr-only">Add a school year</span>
               <select data-action="add-year" ${availableGrades.length === 0 ? "disabled" : ""}>
-                <option value="">${availableGrades.length === 0 ? "All years added" : "Add year"}</option>
+                <option value="" hidden>${availableGrades.length === 0 ? "All years added" : "Add year"}</option>
                 ${availableGrades.map((grade) => `<option value="${grade}">Grade ${grade}</option>`).join("")}
               </select>
             </label>
