@@ -797,24 +797,64 @@ select:hover {
 }
 
 .add-year-control {
-  position: relative;
-  min-width: 128px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 144px;
+  min-height: 40px;
+  padding-left: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  background: var(--surface-soft);
+  transition: border-color 140ms var(--ease-out), background-color 140ms var(--ease-out);
+}
+
+.add-year-control:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-raised);
+}
+
+.add-year-control:focus-within {
+  outline: 3px solid color-mix(in srgb, var(--focus) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.add-year-control:has(select:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .add-year-control svg {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 10px;
-  color: var(--accent);
+  position: static;
+  color: currentColor;
   pointer-events: none;
-  transform: translateY(-50%);
+  transform: none;
 }
 
 .add-year-control select {
-  padding-left: 34px;
-  color: var(--accent);
+  min-width: 0;
+  min-height: 38px;
+  padding: 0 32px 0 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
   font-weight: 680;
+}
+
+.add-year-control select:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
+.add-year-control select:focus-visible {
+  outline: 0;
+}
+
+.add-year-control select:disabled {
+  opacity: 1;
 }
 
 .year-list {
