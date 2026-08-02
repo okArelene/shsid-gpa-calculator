@@ -63,6 +63,11 @@ test("method section documents local credits and both UC resources", () => {
   assert.match(pageHtml, /gpa-requirement\.html/);
 });
 
+test("footer credits the original calculator and updated web rules", () => {
+  assert.match(pageHtml, /Original calculator by Michel Guo ’23/);
+  assert.match(pageHtml, /Web edition with updated rules by Tom Ding ’27/);
+});
+
 test("new sessions default to light theme", () => {
   assert.equal(calculator.createDefaultState().theme, "light");
 });
