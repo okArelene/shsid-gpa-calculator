@@ -75,8 +75,14 @@
     };
   }
 
-  function validLevelIndex(currentSubject, value) {
-    return Number.isInteger(value) && value >= 0 && value < currentSubject.levels.length ? value : 0;
+  function validLevelIndex(currentPreset, currentSubject, value) {
+    if (Number.isInteger(value) && value >= 0 && value < currentSubject.levels.length) return value;
+    const lastLevelIndex = currentSubject.levels.length - 1;
+    const isRemovedChineseX = [11, 12].includes(currentPreset.grade)
+      && currentSubject.name.regular === "Chinese"
+      && value === currentSubject.levels.length
+      && currentSubject.levels[lastLevelIndex]?.name === "IX";
+    return isRemovedChineseX ? lastLevelIndex : 0;
   }
 
   function validScoreIndex(currentSubject, value) {
@@ -94,7 +100,7 @@
       inputs: currentPreset.subjects.map((currentSubject, subjectIndex) => {
         const saved = candidate.inputs?.[subjectIndex] ?? {};
         return {
-          levelIndex: validLevelIndex(currentSubject, saved.levelIndex),
+          levelIndex: validLevelIndex(currentPreset, currentSubject, saved.levelIndex),
           scoreIndex: validScoreIndex(currentSubject, saved.scoreIndex)
         };
       }),
@@ -113,7 +119,7 @@
           ? saved.scoreIndices
           : [saved.scoreIndex, null];
         return {
-          levelIndex: validLevelIndex(currentSubject, saved.levelIndex),
+          levelIndex: validLevelIndex(currentPreset, currentSubject, saved.levelIndex),
           scoreIndices: SEMESTERS.map((_, semesterIndex) => (
             validScoreIndex(currentSubject, savedScores[semesterIndex])
           ))

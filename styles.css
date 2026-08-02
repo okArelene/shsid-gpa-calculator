@@ -18,11 +18,11 @@
   --danger-soft: #f8eaea;
   --warning: #725217;
   --warning-soft: #f8f0d8;
-  --result-bg: #171714;
-  --result-text: #f8f8f4;
-  --result-muted: #a9a9a0;
-  --result-line: #363631;
-  --result-accent: #91a5ff;
+  --result-bg: var(--surface);
+  --result-text: var(--ink);
+  --result-muted: var(--muted);
+  --result-line: var(--line);
+  --result-accent: var(--accent);
   --focus: #3158d4;
   --shadow-sm: 0 1px 2px rgba(20, 20, 18, 0.08);
   --shadow-md: 0 1px 2px rgba(20, 20, 18, 0.06);
@@ -61,11 +61,11 @@
   --danger-soft: #3b2528;
   --warning: #e4c071;
   --warning-soft: #342e20;
-  --result-bg: #edede7;
-  --result-text: #171714;
-  --result-muted: #696960;
-  --result-line: #cecec5;
-  --result-accent: #3158d4;
+  --result-bg: var(--surface);
+  --result-text: var(--ink);
+  --result-muted: var(--muted);
+  --result-line: var(--line);
+  --result-accent: var(--accent);
   --focus: #9aabff;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.22);
   --shadow-md: 0 1px 2px rgba(0, 0, 0, 0.24);
@@ -1162,7 +1162,7 @@ select:active {
   border-radius: var(--radius-lg);
   color: var(--result-text);
   background: var(--result-bg);
-  box-shadow: none;
+  box-shadow: var(--shadow-md);
 }
 
 .result-inner {

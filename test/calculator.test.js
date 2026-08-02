@@ -52,10 +52,13 @@ test("derives stable absolute GPA scale ceilings from the local catalog", () => 
     calculator.formatGPA(calculator.SHSID_WEIGHTED_PRESET_MAXIMA.stockshsidgrade10.gpa),
     "4.430"
   );
-  assert.equal(
-    calculator.formatGPA(calculator.SHSID_WEIGHTED_PRESET_MAXIMA["stockshsidgrade11-2m2-1m3"].gpa),
-    "4.490"
-  );
+  for (const preset of calculator.presets.filter(({ grade, track }) => grade >= 11 && track === "ap-a-level")) {
+    assert.equal(
+      calculator.formatGPA(calculator.SHSID_WEIGHTED_PRESET_MAXIMA[preset.id].gpa),
+      "4.481",
+      `${preset.id} should use the X-free Chinese ceiling`
+    );
+  }
   assert.equal(
     calculator.formatGPA(calculator.SHSID_WEIGHTED_PRESET_MAXIMA["stockshsidgrade11-ib"].gpa),
     "4.500"
@@ -174,12 +177,37 @@ test("locks the original Grade 11 module credit table", () => {
   assert.deepEqual(oneScience.subjects.map((subject) => subject.levels[0].weight), [6, 6, 6, 4.5, 3, 3]);
 });
 
-test("Grade 10 Chinese keeps the legacy IX index and exposes AP separately", () => {
+test("Grades 10 through 12 never offer Chinese X", () => {
+  for (const preset of calculator.presets.filter(({ grade }) => grade >= 10)) {
+    const chinese = preset.subjects.find(({ name }) => name.regular === "Chinese");
+    assert.ok(chinese, `${preset.id} should include Chinese`);
+    assert.equal(
+      chinese.levels.some(({ name }) => name === "X"),
+      false,
+      `${preset.id} should not include Chinese X`
+    );
+  }
+
   const grade10 = calculator.getPresetById("stockshsidgrade10");
   const chineseLevels = grade10.subjects[1].levels;
   assert.equal(chineseLevels[3].name, "IX");
   assert.equal(chineseLevels[4].name, "AP");
   assert.equal(chineseLevels[4].ucHonors, true);
+});
+
+test("saved Grade 11 and 12 Chinese X selections migrate to IX", () => {
+  for (const presetId of ["stockshsidgrade11-2m2-1m3", "stockshsidgrade12-2m2-1m3"]) {
+    const preset = calculator.getPresetById(presetId);
+    const chineseIndex = preset.subjects.findIndex(({ name }) => name.regular === "Chinese");
+    const oldSingleState = calculator.createSinglePresetState(preset);
+    const oldCumulativeState = calculator.createCumulativePresetState(preset);
+    oldSingleState.inputs[chineseIndex].levelIndex = 4;
+    oldCumulativeState.inputs[chineseIndex].levelIndex = 4;
+
+    assert.equal(calculator.sanitizeSinglePresetState(preset, oldSingleState).inputs[chineseIndex].levelIndex, 3);
+    assert.equal(calculator.sanitizeCumulativePresetState(preset, oldCumulativeState).inputs[chineseIndex].levelIndex, 3);
+    assert.equal(preset.subjects[chineseIndex].levels[3].name, "IX");
+  }
 });
 
 test("one semester weighted GPA is weighted points divided by course credits", () => {

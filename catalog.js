@@ -112,7 +112,7 @@
     return subject("English", levels, DEFAULT_SCORES);
   }
 
-  function defaultChinese(weight, hasHP, middleLevelName, isMiddleSchoolChinese, hasAP = false) {
+  function defaultChinese(weight, middleLevelName, isMiddleSchoolChinese, hasAP = false) {
     const offsetOffset = isMiddleSchoolChinese ? 0.1 : 0;
     const levels = [
       level("I–II", weight, -0.5 + offsetOffset),
@@ -120,7 +120,6 @@
       level(middleLevelName, weight, -0.3 + offsetOffset),
       level("IX", weight, -0.2 + offsetOffset)
     ];
-    if (hasHP) levels.push(level("X", weight, -0.1 + offsetOffset));
     if (hasAP) levels.push(level("AP", weight, -0.3 + offsetOffset, { ucHonors: true, rigor: "ap" }));
     return subject("Chinese", levels, DEFAULT_SCORES);
   }
@@ -232,7 +231,7 @@
       hasAL: false,
       hasAP: true
     });
-    const g11Chinese = defaultChinese(3, true, "V–VII/VIII", false);
+    const g11Chinese = defaultChinese(3, "V–VII/VIII", false);
     const g11M34 = defaultOther("Elective module", 3, {
       alternateNames: module45Options,
       hasSP: true,
@@ -289,7 +288,7 @@
         subjectComputeGroups: [
           defaultEnglish(6.5, false),
           defaultOther("Math", 6.5, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
-          defaultChinese(5, false, "S", true),
+          defaultChinese(5, "S", true),
           defaultOther("Science", 2.5, { hasSP: true, hasH: false, hasAL: false, hasAP: false }),
           defaultOther("History", 2.5, { hasSP: true, hasH: false, hasAL: false, hasAP: false })
         ]
@@ -300,7 +299,7 @@
           defaultEnglish(6, false),
           defaultOther("Math", 6, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
           defaultOther("History", 5, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
-          defaultChinese(5, false, "S", true),
+          defaultChinese(5, "S", true),
           defaultOther("Science", 3, { hasSP: true, hasH: false, hasAL: false, hasAP: false })
         ]
       }),
@@ -310,7 +309,7 @@
           defaultEnglish(6, false),
           defaultOther("Math", 6, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
           defaultOther("Geography", 5, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
-          defaultChinese(5, false, "S/5–7", true),
+          defaultChinese(5, "S/5–7", true),
           defaultOther("Biology", 3, { hasSP: false, hasH: true, hasAL: false, hasAP: false }),
           defaultOther("Physics", 2.5, { hasSP: false, hasH: true, hasAL: false, hasAP: false })
         ]
@@ -322,7 +321,7 @@
           defaultOther("Math", 6, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
           defaultOther("History", 4, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
           defaultOther("Chemistry", 3, { hasSP: true, hasH: true, hasAL: false, hasAP: false }),
-          defaultChinese(3, false, "V–VII/VIII", false),
+          defaultChinese(3, "V–VII/VIII", false),
           defaultOther("Elective", 3, {
             alternateNames: [label("Biology"), label("Geography"), label("ITCS", "Computer Science")],
             hasSP: false,
@@ -337,7 +336,7 @@
         grade: 10,
         subjectComputeGroups: [
           defaultEnglish(6, true),
-          defaultChinese(3, false, "V–VII/VIII", false, true),
+          defaultChinese(3, "V–VII/VIII", false, true),
           defaultOther("Math", 5.5, { hasSP: true, hasH: true, hasAL: false, hasAP: true }),
           defaultOther("History", 4, { hasSP: true, hasH: true, hasAL: false, hasAP: true, apCustomWeight: 5 }),
           defaultOther("Science 1", 4, { alternateNames: g10ElectivesChoiceMod1, hasSP: false, hasH: true, hasAL: false, hasAP: false }),
