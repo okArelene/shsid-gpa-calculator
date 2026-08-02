@@ -20,14 +20,13 @@
   ];
 
   const IB_SCORES = [
-    score("F", "F", 0),
-    score("H4", "C/C-", 2.6),
-    score("L5", "C+", 3.0),
-    score("H5", "B-", 3.3),
-    score("L6", "B", 3.6),
-    score("H6", "B+", 3.9),
-    score("L7", "A-", 4.2),
-    score("H7", "A/A+", 4.5)
+    score("1", "F", 0),
+    score("2", "F", 0),
+    score("3", "F", 0),
+    score("4", "C/C-", 2.6),
+    score("5", "B-", 3.3),
+    score("6", "B+", 3.9),
+    score("7", "A/A+", 4.5)
   ];
 
   const IB_OTHER_SCORES = [

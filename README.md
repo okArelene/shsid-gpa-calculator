@@ -31,7 +31,7 @@ When an official SHSID schedule changes, update `catalog.js` deliberately and up
 
 ## Formula notes
 
-- **SHSID weighted:** sum of each entered course's adjusted GPA × credit, divided by entered credits. Credits follow the local student scheduling guideline: each weekly meeting under 55 minutes counts as 1 credit, while a meeting lasting 55 minutes or longer counts as 1.5 credits. Special max-module and ToK/EE matrix rules remain intact.
+- **SHSID weighted:** sum of each entered course's adjusted GPA × credit, divided by entered credits. Credits follow the local student scheduling guideline: each weekly meeting under 55 minutes counts as 1 credit, while a meeting lasting 55 minutes or longer counts as 1.5 credits. IB subjects use the reported 1–7 score; the local high-band mapping is 7 = 4.5, 6 = 3.9, 5 = 3.3, 4 = 2.6, and 1–3 = 0. Special max-module and ToK/EE matrix rules remain intact.
 - **SHSID weighted maximum:** the comparison denominator is derived from every level-and-credit combination in the selected complete schedule. The highest complete Grade 9–12 path is 4.438: Grade 9 maxes at 4.323, Grade 10 at 4.430, and the Grade 11/12 IB schedules at 4.500 each.
 - **US unweighted:** plus and minus modifiers are removed before assigning A = 4, B = 3, C = 2, D = 1, F = 0; all entered courses count equally.
 - **Cumulative:** calculates Semester 1 and Semester 2 independently for every added year, then takes the arithmetic mean of the entered semester GPAs. A course may opt into a different Semester 2 level, credit value, and UC honors treatment; blank semesters are excluded.

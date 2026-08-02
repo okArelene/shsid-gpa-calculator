@@ -4,12 +4,15 @@
   const catalog = global.SHSIDCatalog || (typeof require !== "undefined" ? require("./catalog.js") : null);
   if (!catalog) throw new Error("SHSID catalog failed to load.");
 
-  const STORAGE_KEY = "shsid-gpa-calculator-v4";
+  const STORAGE_KEY = "shsid-gpa-calculator-v5";
   const LEGACY_STORAGE_KEYS = [
+    "shsid-gpa-calculator-v4",
     "shsid-gpa-calculator-v3",
     "shsid-gpa-calculator-v2",
     "shsid-gpa-calculator-v1"
   ];
+  const STATE_VERSION = 5;
+  const LEGACY_IB_SCORE_INDEX_MAP = [2, 3, 4, 4, 5, 5, 6, 6];
   const CUMULATIVE_GRADES = [9, 10, 11, 12];
   const SEMESTERS = [1, 2];
   const COURSE_CATEGORY_ORDER = Object.freeze({
@@ -40,6 +43,7 @@
     SHSID_WEIGHTED_PRESET_MAXIMA,
     SHSID_WEIGHTED_SCHOOL_MAXIMUM,
     UC_CAPPED_SCHOOL_MAXIMUM,
+    IB_SCORES,
     presets,
     computeSubjectGPA,
     computeCumulativeTotals,
@@ -97,19 +101,28 @@
     return Number.isInteger(value) && value >= 0 && value < currentSubject.scores.length ? value : null;
   }
 
+  function sanitizedScoreIndex(currentSubject, value, sourceVersion = STATE_VERSION) {
+    const migratedValue = sourceVersion < STATE_VERSION
+      && currentSubject.scores === IB_SCORES
+      && Number.isInteger(value)
+      ? LEGACY_IB_SCORE_INDEX_MAP[value]
+      : value;
+    return validScoreIndex(currentSubject, migratedValue);
+  }
+
   function validNameChoice(currentSubject, value) {
     const choiceCount = currentSubject.alternateNames?.length ?? 0;
     return Number.isInteger(value) && value >= -1 && value < choiceCount ? value : -1;
   }
 
-  function sanitizeSinglePresetState(currentPreset, candidate) {
+  function sanitizeSinglePresetState(currentPreset, candidate, sourceVersion = STATE_VERSION) {
     if (!candidate || typeof candidate !== "object") return createSinglePresetState(currentPreset);
     return {
       inputs: currentPreset.subjects.map((currentSubject, subjectIndex) => {
         const saved = candidate.inputs?.[subjectIndex] ?? {};
         return {
           levelIndex: validLevelIndex(currentPreset, currentSubject, saved.levelIndex),
-          scoreIndex: validScoreIndex(currentSubject, saved.scoreIndex)
+          scoreIndex: sanitizedScoreIndex(currentSubject, saved.scoreIndex, sourceVersion)
         };
       }),
       nameChoices: currentPreset.subjects.map((currentSubject, subjectIndex) => (
@@ -118,7 +131,7 @@
     };
   }
 
-  function sanitizeCumulativePresetState(currentPreset, candidate) {
+  function sanitizeCumulativePresetState(currentPreset, candidate, sourceVersion = STATE_VERSION) {
     if (!candidate || typeof candidate !== "object") return createCumulativePresetState(currentPreset);
     return {
       inputs: currentPreset.subjects.map((currentSubject, subjectIndex) => {
@@ -142,7 +155,7 @@
           separateLevels: currentSubject.levels.length > 1
             && (Boolean(saved.separateLevels) || levelIndices[0] !== levelIndices[1]),
           scoreIndices: SEMESTERS.map((_, semesterIndex) => (
-            validScoreIndex(currentSubject, savedScores[semesterIndex])
+            sanitizedScoreIndex(currentSubject, savedScores[semesterIndex], sourceVersion)
           ))
         };
       }),
@@ -179,7 +192,7 @@
 
   function createDefaultState() {
     return {
-      version: 4,
+      version: STATE_VERSION,
       mode: "single",
       scoreFormat: "percentage",
       theme: "light",
@@ -192,7 +205,7 @@
     };
   }
 
-  function sanitizeYearState(candidate, seenGrades) {
+  function sanitizeYearState(candidate, seenGrades, sourceVersion = STATE_VERSION) {
     const grade = Number(candidate?.grade);
     if (!CUMULATIVE_GRADES.includes(grade) || seenGrades.has(grade)) return null;
     seenGrades.add(grade);
@@ -205,7 +218,8 @@
       sanitizeCumulativePresetState(
         currentPreset,
         candidate.byPreset?.[currentPreset.id]
-          ?? (candidate.presetId === currentPreset.id ? candidate.presetState : null)
+          ?? (candidate.presetId === currentPreset.id ? candidate.presetState : null),
+        sourceVersion
       )
     ]));
 
@@ -215,6 +229,7 @@
   function sanitizeState(candidate) {
     const fallback = createDefaultState();
     if (!candidate || typeof candidate !== "object") return fallback;
+    const sourceVersion = Number.isInteger(candidate.version) ? candidate.version : 1;
 
     const requestedSingleId = candidate.singlePresetId ?? candidate.presetId;
     const singlePresetId = presets.some((currentPreset) => currentPreset.id === requestedSingleId)
@@ -223,19 +238,19 @@
     const candidateByPreset = candidate.byPreset ?? {};
     const byPreset = Object.fromEntries(presets.map((currentPreset) => [
       currentPreset.id,
-      sanitizeSinglePresetState(currentPreset, candidateByPreset[currentPreset.id])
+      sanitizeSinglePresetState(currentPreset, candidateByPreset[currentPreset.id], sourceVersion)
     ]));
 
     const seenGrades = new Set();
     const cumulativeYears = Array.isArray(candidate.cumulativeYears)
       ? candidate.cumulativeYears
-        .map((year) => sanitizeYearState(year, seenGrades))
+        .map((year) => sanitizeYearState(year, seenGrades, sourceVersion))
         .filter(Boolean)
         .sort((a, b) => a.grade - b.grade)
       : fallback.cumulativeYears;
 
     return {
-      version: 4,
+      version: STATE_VERSION,
       mode: candidate.mode === "cumulative" ? "cumulative" : "single",
       scoreFormat: candidate.scoreFormat === "letter" ? "letter" : "percentage",
       theme: candidate.theme === "dark" ? "dark" : candidate.theme === "light" ? "light" : fallback.theme,

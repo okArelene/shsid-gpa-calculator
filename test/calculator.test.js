@@ -57,6 +57,7 @@ test("method section documents local credits and both UC resources", () => {
   assert.match(pageHtml, /under 55 minutes/);
   assert.match(pageHtml, /55 minutes or longer/);
   assert.match(pageHtml, /changed midyear/);
+  assert.match(pageHtml, /Enter the reported grade from 1–7/);
   assert.match(pageHtml, /unbased/);
   assert.match(pageHtml, /removes plus and minus modifiers/);
   assert.match(pageHtml, /up to 8 honors points/);
@@ -72,8 +73,20 @@ test("footer credits the original calculator and updated web rules", () => {
 test("new sessions default to light theme", () => {
   const state = calculator.createDefaultState();
   assert.equal(state.theme, "light");
-  assert.equal(state.version, 4);
-  assert.equal(calculator.STORAGE_KEY, "shsid-gpa-calculator-v4");
+  assert.equal(state.version, 5);
+  assert.equal(calculator.STORAGE_KEY, "shsid-gpa-calculator-v5");
+});
+
+test("IB subjects use plain 1–7 scores with the former high-band GPA values", () => {
+  assert.deepEqual(
+    calculator.IB_SCORES.map(({ percentageName }) => percentageName),
+    ["1", "2", "3", "4", "5", "6", "7"]
+  );
+  assert.deepEqual(
+    calculator.IB_SCORES.map(({ baseGPA }) => baseGPA),
+    [0, 0, 0, 2.6, 3.3, 3.9, 4.5]
+  );
+  assert.equal(calculator.IB_SCORES.some(({ percentageName }) => /^[HL]/.test(percentageName)), false);
 });
 
 test("breakdown pairs weighted and unweighted semester GPAs", () => {
@@ -202,7 +215,7 @@ test("unweighted GPA counts visible courses equally", () => {
 
 test("IB ToK and EE use the combined matrix as one half-credit group", () => {
   const preset = calculator.getPresetById("stockshsidgrade11-ibee");
-  const inputs = inputFor(preset, 0, 7);
+  const inputs = inputFor(preset, 0, 6);
   inputs[6] = { levelIndex: 0, scoreIndex: 3 };
   inputs[7] = { levelIndex: 0, scoreIndex: 4 };
   assert.equal(calculator.formatGPA(calculator.computePresetGPA(preset, inputs)), "4.500");
@@ -364,6 +377,31 @@ test("legacy shared cumulative levels migrate to both semesters", () => {
   assert.equal(migrated.inputs[3].separateLevels, false);
 });
 
+test("v4 IB high and low bands migrate to numeric scores without shifting grades", () => {
+  const presetId = "stockshsidgrade11-ib";
+  const legacy = calculator.createDefaultState();
+  legacy.version = 4;
+  legacy.singlePresetId = presetId;
+  legacy.byPreset[presetId].inputs.slice(0, 6).forEach((input, index) => {
+    input.scoreIndex = [7, 6, 5, 4, 1, 0][index];
+  });
+
+  const year = calculator.createYearState(11);
+  year.presetId = presetId;
+  year.byPreset[presetId].inputs[0].scoreIndices = [3, 2];
+  legacy.cumulativeYears = [year];
+
+  const migrated = calculator.sanitizeState(legacy);
+  assert.deepEqual(
+    migrated.byPreset[presetId].inputs.slice(0, 6).map(({ scoreIndex }) => scoreIndex),
+    [6, 6, 5, 5, 3, 2]
+  );
+  assert.deepEqual(
+    migrated.cumulativeYears[0].byPreset[presetId].inputs[0].scoreIndices,
+    [4, 4]
+  );
+});
+
 test("semester-specific levels affect credits, weighted GPA, and UC honors independently", () => {
   const preset = calculator.getPresetById("stockshsidgrade10");
   const presetState = calculator.createCumulativePresetState(preset);
@@ -521,7 +559,7 @@ test("AP Chinese and IB courses earn automatic UC honors points", () => {
   const ibInputs = blankInputFor(grade11Ib);
   const chineseApIndex = grade10.subjects[1].levels.findIndex((level) => level.name === "AP");
   grade10Inputs[1] = { levelIndex: chineseApIndex, scoreIndex: 7 };
-  ibInputs[0] = { levelIndex: 0, scoreIndex: 7 };
+  ibInputs[0] = { levelIndex: 0, scoreIndex: 6 };
 
   const uc = calculator.computeUCGPA([
     { grade: 10, semester: 1, preset: grade10, inputs: grade10Inputs, nameChoices: blankNamesFor(grade10) },
