@@ -725,6 +725,18 @@ select:active {
   gap: 2px;
 }
 
+.shared-level-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.shared-level-choice {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
 .level-segments label {
   display: grid;
   min-height: 42px;
@@ -766,6 +778,71 @@ select:active {
 
 .level-select {
   display: none;
+}
+
+.level-mode-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 2px;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 680;
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  transition: color 120ms var(--ease-out), text-decoration-color 120ms var(--ease-out);
+}
+
+.level-mode-button:hover {
+  color: var(--accent-strong);
+  text-decoration-color: currentColor;
+}
+
+.level-mode-button:active {
+  opacity: 0.68;
+}
+
+.level-control.is-semester-specific {
+  display: grid;
+  align-content: center;
+}
+
+.semester-level-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.semester-level-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.semester-level-field > span {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 720;
+  letter-spacing: 0.04em;
+}
+
+.semester-level-field select {
+  min-height: 34px;
+  padding-right: 24px;
+  padding-left: 7px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
 }
 
 .grade-control select {
@@ -1871,6 +1948,12 @@ summary:focus-visible {
   .level-control,
   .grade-control {
     padding-left: 0;
+  }
+
+  .level-mode-button {
+    min-height: 44px;
+    padding-right: 10px;
+    padding-left: 10px;
   }
 
   .course-name-field {

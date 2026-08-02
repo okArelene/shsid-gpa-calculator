@@ -56,6 +56,7 @@ test("Grade 11 and 12 schedule labels use the original module notation", () => {
 test("method section documents local credits and both UC resources", () => {
   assert.match(pageHtml, /under 55 minutes/);
   assert.match(pageHtml, /55 minutes or longer/);
+  assert.match(pageHtml, /changed midyear/);
   assert.match(pageHtml, /unbased/);
   assert.match(pageHtml, /removes plus and minus modifiers/);
   assert.match(pageHtml, /up to 8 honors points/);
@@ -69,7 +70,10 @@ test("footer credits the original calculator and updated web rules", () => {
 });
 
 test("new sessions default to light theme", () => {
-  assert.equal(calculator.createDefaultState().theme, "light");
+  const state = calculator.createDefaultState();
+  assert.equal(state.theme, "light");
+  assert.equal(state.version, 4);
+  assert.equal(calculator.STORAGE_KEY, "shsid-gpa-calculator-v4");
 });
 
 test("breakdown pairs weighted and unweighted semester GPAs", () => {
@@ -251,10 +255,16 @@ test("saved Grade 11 and 12 Chinese X selections migrate to IX", () => {
     const oldSingleState = calculator.createSinglePresetState(preset);
     const oldCumulativeState = calculator.createCumulativePresetState(preset);
     oldSingleState.inputs[chineseIndex].levelIndex = 4;
-    oldCumulativeState.inputs[chineseIndex].levelIndex = 4;
+    oldCumulativeState.inputs[chineseIndex] = {
+      levelIndex: 4,
+      scoreIndices: [null, null]
+    };
 
     assert.equal(calculator.sanitizeSinglePresetState(preset, oldSingleState).inputs[chineseIndex].levelIndex, 3);
-    assert.equal(calculator.sanitizeCumulativePresetState(preset, oldCumulativeState).inputs[chineseIndex].levelIndex, 3);
+    assert.deepEqual(
+      calculator.sanitizeCumulativePresetState(preset, oldCumulativeState).inputs[chineseIndex].levelIndices,
+      [3, 3]
+    );
     assert.equal(preset.subjects[chineseIndex].levels[3].name, "IX");
   }
 });
@@ -323,13 +333,92 @@ test("blank semesters are excluded from the cumulative divisor", () => {
   assert.equal(calculator.formatGPA(totals.weightedGPA), "4.000");
 });
 
-test("cumulative state stores independent grades for both semesters", () => {
+test("cumulative state stores independent levels and grades for both semesters", () => {
   const preset = calculator.getPresetById("stockshsidgrade10");
   const state = calculator.createCumulativePresetState(preset);
-  state.inputs[4].levelIndex = 1;
+  state.inputs[4].levelIndices = [1, 0];
+  state.inputs[4].separateLevels = true;
   state.inputs[4].scoreIndices[0] = 7;
-  assert.deepEqual(state.inputs[4], { levelIndex: 1, scoreIndices: [7, null] });
-  assert.deepEqual(state.inputs[5], { levelIndex: 0, scoreIndices: [null, null] });
+  assert.deepEqual(state.inputs[4], {
+    levelIndices: [1, 0],
+    separateLevels: true,
+    scoreIndices: [7, null]
+  });
+  assert.deepEqual(state.inputs[5], {
+    levelIndices: [0, 0],
+    separateLevels: false,
+    scoreIndices: [null, null]
+  });
+});
+
+test("legacy shared cumulative levels migrate to both semesters", () => {
+  const preset = calculator.getPresetById("stockshsidgrade10");
+  const legacy = {
+    inputs: preset.subjects.map(() => ({ levelIndex: 0, scoreIndices: [null, null] })),
+    nameChoices: blankNamesFor(preset)
+  };
+  legacy.inputs[3].levelIndex = 3;
+
+  const migrated = calculator.sanitizeCumulativePresetState(preset, legacy);
+  assert.deepEqual(migrated.inputs[3].levelIndices, [3, 3]);
+  assert.equal(migrated.inputs[3].separateLevels, false);
+});
+
+test("semester-specific levels affect credits, weighted GPA, and UC honors independently", () => {
+  const preset = calculator.getPresetById("stockshsidgrade10");
+  const presetState = calculator.createCumulativePresetState(preset);
+  presetState.inputs[3] = {
+    levelIndices: [0, 3], // History S, then AP
+    separateLevels: true,
+    scoreIndices: [7, 7]
+  };
+  const entries = calculator.SEMESTERS.map((semester, semesterIndex) => ({
+    grade: 10,
+    semester,
+    label: `G10 S${semester}`,
+    preset,
+    inputs: calculator.semesterInputs(presetState, semesterIndex),
+    nameChoices: presetState.nameChoices
+  }));
+
+  const totals = calculator.computeCumulativeTotals(entries);
+  assert.equal(totals.totalWeight, 9);
+  assert.deepEqual(
+    totals.semesterResults.map((semester) => calculator.formatGPA(semester.weightedGPA)),
+    ["4.000", "4.500"]
+  );
+  assert.equal(calculator.formatGPA(totals.weightedGPA), "4.250");
+  assert.equal(calculator.formatGPA(totals.unweightedGPA), "4.000");
+
+  const uc = calculator.computeUCGPA(entries);
+  assert.equal(uc.semesterCount, 2);
+  assert.equal(uc.honorsSemesters, 1);
+  assert.equal(uc.cappedHonorsSemesters, 1);
+  assert.equal(calculator.formatGPA(uc.cappedWeighted), "4.500");
+});
+
+test("cumulative UI discloses separate level controls only when requested", () => {
+  const state = calculator.createDefaultState();
+  state.mode = "cumulative";
+  state.cumulativeYears = [calculator.createYearState(10)];
+  const year = state.cumulativeYears[0];
+  const presetState = year.byPreset[year.presetId];
+
+  const sharedHtml = calculator.renderCumulativeWorkspace(state);
+  assert.match(sharedHtml, /Different in S2/);
+  assert.doesNotMatch(sharedHtml, /aria-label="Semester 2 level for History"/);
+
+  presetState.inputs[3] = {
+    levelIndices: [0, 3],
+    separateLevels: true,
+    scoreIndices: [7, 7]
+  };
+  const splitHtml = calculator.renderCumulativeWorkspace(state);
+  assert.match(splitHtml, /aria-label="Semester 1 level for History"/);
+  assert.match(splitHtml, /aria-label="Semester 2 level for History"/);
+  assert.match(splitHtml, /Use same level/);
+  assert.match(splitHtml, /S1 4 cr · S2 5 cr/);
+  assert.match(splitHtml, /UC \+1 S2/);
 });
 
 test("each cumulative year expands into two calculation entries", () => {
@@ -366,6 +455,8 @@ test("v2 cumulative grades migrate to Semester 1 without fabricating Semester 2"
   });
   const migratedInput = migrated.cumulativeYears[0].byPreset[grade9.id].inputs[0];
   assert.deepEqual(migratedInput.scoreIndices, [7, null]);
+  assert.deepEqual(migratedInput.levelIndices, [0, 0]);
+  assert.equal(migratedInput.separateLevels, false);
 });
 
 test("UC GPA uses separate Grade 10 and 11 A-G semesters with the 4/8 honors caps", () => {

@@ -4,8 +4,12 @@
   const catalog = global.SHSIDCatalog || (typeof require !== "undefined" ? require("./catalog.js") : null);
   if (!catalog) throw new Error("SHSID catalog failed to load.");
 
-  const STORAGE_KEY = "shsid-gpa-calculator-v3";
-  const LEGACY_STORAGE_KEYS = ["shsid-gpa-calculator-v2", "shsid-gpa-calculator-v1"];
+  const STORAGE_KEY = "shsid-gpa-calculator-v4";
+  const LEGACY_STORAGE_KEYS = [
+    "shsid-gpa-calculator-v3",
+    "shsid-gpa-calculator-v2",
+    "shsid-gpa-calculator-v1"
+  ];
   const CUMULATIVE_GRADES = [9, 10, 11, 12];
   const SEMESTERS = [1, 2];
   const COURSE_CATEGORY_ORDER = Object.freeze({
@@ -70,7 +74,11 @@
 
   function createCumulativePresetState(currentPreset) {
     return {
-      inputs: currentPreset.subjects.map(() => ({ levelIndex: 0, scoreIndices: [null, null] })),
+      inputs: currentPreset.subjects.map(() => ({
+        levelIndices: [0, 0],
+        separateLevels: false,
+        scoreIndices: [null, null]
+      })),
       nameChoices: currentPreset.subjects.map(() => -1)
     };
   }
@@ -118,8 +126,21 @@
         const savedScores = Array.isArray(saved.scoreIndices)
           ? saved.scoreIndices
           : [saved.scoreIndex, null];
+        const savedLevels = Array.isArray(saved.levelIndices)
+          ? saved.levelIndices
+          : [saved.levelIndex, saved.levelIndex];
+        const primaryLevelIndex = validLevelIndex(currentPreset, currentSubject, savedLevels[0]);
+        const levelIndices = SEMESTERS.map((_, semesterIndex) => (
+          validLevelIndex(
+            currentPreset,
+            currentSubject,
+            savedLevels[semesterIndex] ?? primaryLevelIndex
+          )
+        ));
         return {
-          levelIndex: validLevelIndex(currentPreset, currentSubject, saved.levelIndex),
+          levelIndices,
+          separateLevels: currentSubject.levels.length > 1
+            && (Boolean(saved.separateLevels) || levelIndices[0] !== levelIndices[1]),
           scoreIndices: SEMESTERS.map((_, semesterIndex) => (
             validScoreIndex(currentSubject, savedScores[semesterIndex])
           ))
@@ -158,7 +179,7 @@
 
   function createDefaultState() {
     return {
-      version: 3,
+      version: 4,
       mode: "single",
       scoreFormat: "percentage",
       theme: "light",
@@ -195,8 +216,7 @@
     const fallback = createDefaultState();
     if (!candidate || typeof candidate !== "object") return fallback;
 
-    const legacySingleId = candidate.version !== 3 ? candidate.presetId : null;
-    const requestedSingleId = legacySingleId ?? candidate.singlePresetId;
+    const requestedSingleId = candidate.singlePresetId ?? candidate.presetId;
     const singlePresetId = presets.some((currentPreset) => currentPreset.id === requestedSingleId)
       ? requestedSingleId
       : fallback.singlePresetId;
@@ -215,7 +235,7 @@
       : fallback.cumulativeYears;
 
     return {
-      version: 3,
+      version: 4,
       mode: candidate.mode === "cumulative" ? "cumulative" : "single",
       scoreFormat: candidate.scoreFormat === "letter" ? "letter" : "percentage",
       theme: candidate.theme === "dark" ? "dark" : candidate.theme === "light" ? "light" : fallback.theme,
@@ -261,7 +281,7 @@
 
   function semesterInputs(presetState, semesterIndex) {
     return presetState.inputs.map((input) => ({
-      levelIndex: input.levelIndex,
+      levelIndex: input.levelIndices?.[semesterIndex] ?? input.levelIndex ?? 0,
       scoreIndex: input.scoreIndices[semesterIndex]
     }));
   }
@@ -451,34 +471,165 @@
     `;
   }
 
-  function renderUcMarker(currentSubject, presetState, subjectIndex, yearGrade) {
+  function cumulativeLevelIndex(selectedInput, semesterIndex) {
+    return selectedInput.levelIndices?.[semesterIndex] ?? selectedInput.levelIndex ?? 0;
+  }
+
+  function selectedCumulativeLevels(currentSubject, selectedInput) {
+    return SEMESTERS.map((_, semesterIndex) => selectedLevel(currentSubject, {
+      levelIndex: cumulativeLevelIndex(selectedInput, semesterIndex)
+    }));
+  }
+
+  function renderUcMarker(currentSubject, presetState, subjectIndex, yearGrade, cumulative = false) {
     if (yearGrade !== 10 && yearGrade !== 11) return "";
     const choiceIndex = presetState.nameChoices[subjectIndex];
     if (!isSubjectUCEligible(currentSubject, choiceIndex)) return "";
-    const levelValue = selectedLevel(currentSubject, presetState.inputs[subjectIndex]);
+    const selectedInput = presetState.inputs[subjectIndex];
+    const levelValues = cumulative
+      ? selectedCumulativeLevels(currentSubject, selectedInput)
+      : [selectedLevel(currentSubject, selectedInput)];
+    const honorsSemesters = levelValues.flatMap((levelValue, semesterIndex) => (
+      levelValue?.ucHonors ? [semesterIndex + 1] : []
+    ));
+    const semesterSuffix = cumulative && honorsSemesters.length === 1
+      ? ` S${honorsSemesters[0]}`
+      : "";
+    const honorsTitle = honorsSemesters.length === 0
+      ? ""
+      : cumulative && honorsSemesters.length === 1
+        ? ` UC honors applies in Semester ${honorsSemesters[0]}.`
+        : cumulative
+          ? " UC honors applies in both semesters."
+          : " UC honors applies automatically.";
     return `
-      <span class="uc-marker" title="Automatically included in the UC A–G estimate">
-        * A–G${levelValue.ucHonors ? " · UC +1" : ""}
+      <span class="uc-marker" title="Automatically included in the UC A–G estimate.${honorsTitle}">
+        * A–G${honorsSemesters.length > 0 ? ` · UC +1${semesterSuffix}` : ""}
       </span>
     `;
   }
 
-  function renderLevelControl(currentSubject, selectedInput, presetState, subjectIndex, attrs, controlId) {
+  function renderCourseMeta(currentSubject, presetState, subjectIndex, yearGrade, cumulative = false) {
+    const selectedInput = presetState.inputs[subjectIndex];
+    const levelValues = cumulative
+      ? selectedCumulativeLevels(currentSubject, selectedInput)
+      : [selectedLevel(currentSubject, selectedInput)];
+    const weights = levelValues.map((levelValue) => levelValue?.weight ?? 0);
+    const creditLabel = cumulative && weights[0] !== weights[1]
+      ? `S1 ${weights[0]} cr · S2 ${weights[1]} cr`
+      : `${weights[0]} credits`;
+    return `
+      <span>${escapeHtml(creditLabel)}</span>
+      ${renderUcMarker(currentSubject, presetState, subjectIndex, yearGrade, cumulative)}
+    `;
+  }
+
+  function renderLevelModeButton(currentSubject, selectedInput, subjectIndex, attrs, courseName) {
+    if (currentSubject.levels.length <= 1) return "";
+    const isSeparate = Boolean(selectedInput.separateLevels);
+    const action = isSeparate ? "merge-levels" : "split-levels";
+    const label = isSeparate ? "Use same level" : "Different in S2";
+    const ariaLabel = isSeparate
+      ? `Use the Semester 1 level for both semesters of ${courseName}`
+      : `Use a different Semester 2 level for ${courseName}`;
+    return `<button class="level-mode-button" type="button" data-action="${action}" data-subject-index="${subjectIndex}" aria-label="${escapeHtml(ariaLabel)}" ${attrs}>${label}</button>`;
+  }
+
+  function renderSharedLevelChoices(
+    currentSubject,
+    selectedLevelIndex,
+    subjectIndex,
+    attrs,
+    controlId,
+    action,
+    courseName
+  ) {
+    const levelLabel = action === "shared-level"
+      ? `Level for ${courseName} in both semesters`
+      : `Level for ${courseName}`;
+    return `
+      <div class="level-segments">
+        ${currentSubject.levels.map((currentLevel, levelIndex) => `
+          <label>
+            <input type="radio" name="${controlId}-level" value="${levelIndex}" data-action="${action}" data-subject-index="${subjectIndex}" ${attrs} ${selectedLevelIndex === levelIndex ? "checked" : ""}>
+            <span>${escapeHtml(currentLevel.name)}</span>
+          </label>
+        `).join("")}
+      </div>
+      <select class="level-select" aria-label="${escapeHtml(levelLabel)}" data-action="${action}" data-subject-index="${subjectIndex}" ${attrs}>
+        ${currentSubject.levels.map((currentLevel, levelIndex) => `<option value="${levelIndex}" ${selectedLevelIndex === levelIndex ? "selected" : ""}>${escapeHtml(currentLevel.name)}</option>`).join("")}
+      </select>
+    `;
+  }
+
+  function renderSemesterLevelSelect(
+    currentSubject,
+    selectedLevelIndex,
+    subjectIndex,
+    semesterIndex,
+    attrs,
+    controlId,
+    courseName
+  ) {
+    const semester = semesterIndex + 1;
+    return `
+      <label class="semester-level-field" for="${controlId}-semester-${semester}-level">
+        <span>S${semester}</span>
+        <select id="${controlId}-semester-${semester}-level" aria-label="Semester ${semester} level for ${escapeHtml(courseName)}" data-action="semester-level" data-subject-index="${subjectIndex}" data-semester-index="${semesterIndex}" ${attrs}>
+          ${currentSubject.levels.map((currentLevel, levelIndex) => `<option value="${levelIndex}" ${selectedLevelIndex === levelIndex ? "selected" : ""}>${escapeHtml(currentLevel.name)}</option>`).join("")}
+        </select>
+      </label>
+    `;
+  }
+
+  function renderLevelControl(
+    currentSubject,
+    selectedInput,
+    presetState,
+    subjectIndex,
+    attrs,
+    controlId,
+    cumulative = false
+  ) {
     const courseName = resolvedSubjectName(currentSubject, presetState.nameChoices[subjectIndex]);
+    if (cumulative && selectedInput.separateLevels) {
+      return `
+        <fieldset class="level-control is-semester-specific">
+          <legend class="sr-only">Levels for ${escapeHtml(courseName)}</legend>
+          <div class="semester-level-grid">
+            ${SEMESTERS.map((_, semesterIndex) => renderSemesterLevelSelect(
+              currentSubject,
+              cumulativeLevelIndex(selectedInput, semesterIndex),
+              subjectIndex,
+              semesterIndex,
+              attrs,
+              controlId,
+              courseName
+            )).join("")}
+          </div>
+        </fieldset>
+      `;
+    }
+
+    const selectedLevelIndex = cumulative
+      ? cumulativeLevelIndex(selectedInput, 0)
+      : selectedInput.levelIndex;
     return `
       <fieldset class="level-control">
-        <legend class="sr-only">Level for ${escapeHtml(courseName)}</legend>
-        <div class="level-segments">
-          ${currentSubject.levels.map((currentLevel, levelIndex) => `
-            <label>
-              <input type="radio" name="${controlId}-level" value="${levelIndex}" data-action="level" data-subject-index="${subjectIndex}" ${attrs} ${selectedInput.levelIndex === levelIndex ? "checked" : ""}>
-              <span>${escapeHtml(currentLevel.name)}</span>
-            </label>
-          `).join("")}
+        <legend class="sr-only">Level for ${escapeHtml(courseName)}${cumulative ? " in both semesters" : ""}</legend>
+        <div class="shared-level-control">
+          <div class="shared-level-choice">
+            ${renderSharedLevelChoices(
+              currentSubject,
+              selectedLevelIndex,
+              subjectIndex,
+              attrs,
+              controlId,
+              cumulative ? "shared-level" : "level",
+              courseName
+            )}
+          </div>
         </div>
-        <select class="level-select" aria-label="Level for ${escapeHtml(courseName)}" data-action="level" data-subject-index="${subjectIndex}" ${attrs}>
-          ${currentSubject.levels.map((currentLevel, levelIndex) => `<option value="${levelIndex}" ${selectedInput.levelIndex === levelIndex ? "selected" : ""}>${escapeHtml(currentLevel.name)}</option>`).join("")}
-        </select>
       </fieldset>
     `;
   }
@@ -524,19 +675,24 @@
             const selectedScores = cumulative ? selected.scoreIndices : [selected.scoreIndex];
             const isComplete = selectedScores.some((scoreIndex) => Number.isInteger(scoreIndex));
             const controlId = `${scope}-${yearGrade ?? "single"}-${currentPreset.id}-${subjectIndex}`;
-            const levelValue = selectedLevel(currentSubject, selected);
 
             return `
               <article class="course-row ${isComplete ? "is-complete" : ""}">
                 <div class="course-identity">
                   ${renderCourseName(currentPreset, presetState, currentSubject, subjectIndex, attrs, controlId)}
                   <div class="course-meta">
-                    <span>${escapeHtml(levelValue.weight)} credits</span>
-                    ${renderUcMarker(currentSubject, presetState, subjectIndex, yearGrade)}
+                    ${renderCourseMeta(currentSubject, presetState, subjectIndex, yearGrade, cumulative)}
+                    ${cumulative ? renderLevelModeButton(
+                      currentSubject,
+                      selected,
+                      subjectIndex,
+                      attrs,
+                      resolvedSubjectName(currentSubject, presetState.nameChoices[subjectIndex])
+                    ) : ""}
                   </div>
                 </div>
 
-                ${renderLevelControl(currentSubject, selected, presetState, subjectIndex, attrs, controlId)}
+                ${renderLevelControl(currentSubject, selected, presetState, subjectIndex, attrs, controlId, cumulative)}
 
                 ${cumulative
                   ? SEMESTERS.map((semester, semesterIndex) => renderGradeSelect(
@@ -645,7 +801,7 @@
           <div>
             <p class="section-label">Up to eight semesters</p>
             <h2 id="cumulative-heading">Cumulative GPA</h2>
-            <p>Semester 1 and Semester 2 are calculated separately, then averaged.</p>
+            <p>Semesters are calculated separately, then averaged. Changed levels midyear? Use “Different in S2” on that course.</p>
           </div>
           <div class="cumulative-actions">
             ${availableGrades.length > 0 ? `
@@ -899,8 +1055,8 @@
     const subjectIndex = Number(target.dataset.subjectIndex);
     if (!context || !Number.isInteger(subjectIndex)) return;
 
-    if (target.dataset.action === "level") {
-      target.closest(".course-row")?.querySelectorAll('[data-action="level"]').forEach((control) => {
+    if (["level", "shared-level"].includes(target.dataset.action)) {
+      target.closest(".course-row")?.querySelectorAll(`[data-action="${target.dataset.action}"]`).forEach((control) => {
         if (control === target) return;
         if (control.type === "radio") control.checked = control.value === target.value;
         else control.value = target.value;
@@ -914,16 +1070,25 @@
     const courseRow = target.closest(".course-row");
     courseRow?.classList.toggle("is-complete", Boolean(isComplete));
 
-    if (target.dataset.action === "level") {
+    if (["level", "shared-level", "semester-level"].includes(target.dataset.action)) {
       const currentSubject = context.currentPreset.subjects[subjectIndex];
-      const levelValue = selectedLevel(currentSubject, selectedInput);
       const courseMeta = courseRow?.querySelector(".course-meta");
       if (courseMeta) {
         const yearGrade = context.kind === "single" ? context.currentPreset.grade : Number(target.dataset.yearGrade);
-        courseMeta.innerHTML = `
-          <span>${escapeHtml(levelValue.weight)} credits</span>
-          ${renderUcMarker(currentSubject, context.presetState, subjectIndex, yearGrade)}
-        `;
+        const attrs = contextAttributes(context.kind === "year" ? "year" : "single", yearGrade);
+        const courseName = resolvedSubjectName(
+          currentSubject,
+          context.presetState.nameChoices[subjectIndex]
+        );
+        courseMeta.innerHTML = renderCourseMeta(
+          currentSubject,
+          context.presetState,
+          subjectIndex,
+          yearGrade,
+          context.kind === "year"
+        ) + (context.kind === "year"
+          ? renderLevelModeButton(currentSubject, selectedInput, subjectIndex, attrs, courseName)
+          : "");
       }
     }
 
@@ -1012,6 +1177,26 @@
         if (!addCumulativeYear(state, grade)) return;
         persistAndRender({ revealYearGrade: grade });
         return;
+      } else if (["split-levels", "merge-levels"].includes(action)) {
+        const context = stateContextForTarget(state, target);
+        const subjectIndex = Number(target.dataset.subjectIndex);
+        if (!context || context.kind !== "year" || !Number.isInteger(subjectIndex)) return;
+        const selectedInput = context.presetState.inputs[subjectIndex];
+        if (!selectedInput) return;
+        if (action === "split-levels") {
+          selectedInput.separateLevels = true;
+          selectedInput.levelIndices[1] = selectedInput.levelIndices[0];
+        } else {
+          selectedInput.levelIndices[1] = selectedInput.levelIndices[0];
+          selectedInput.separateLevels = false;
+        }
+        const grade = Number(target.dataset.yearGrade);
+        persistAndRender();
+        const focusSelector = action === "split-levels"
+          ? `[data-action="semester-level"][data-year-grade="${grade}"][data-subject-index="${subjectIndex}"][data-semester-index="1"]`
+          : `[data-action="split-levels"][data-year-grade="${grade}"][data-subject-index="${subjectIndex}"]`;
+        documentRef.querySelector(focusSelector)?.focus();
+        return;
       } else {
         return;
       }
@@ -1038,7 +1223,7 @@
         year.presetId = validPreset.id;
         year.byPreset[validPreset.id] ??= createCumulativePresetState(validPreset);
         renderOptions.animateWorkspace = true;
-      } else if (["course-name", "level", "score", "semester-score"].includes(action)) {
+      } else if (["course-name", "level", "shared-level", "semester-level", "score", "semester-score"].includes(action)) {
         const context = stateContextForTarget(state, target);
         const subjectIndex = Number(target.dataset.subjectIndex);
         if (!context || !Number.isInteger(subjectIndex) || !context.currentPreset.subjects[subjectIndex]) return;
@@ -1048,6 +1233,16 @@
           renderOptions.animateWorkspace = true;
         } else if (action === "level") {
           context.presetState.inputs[subjectIndex].levelIndex = Number(target.value);
+          renderOptions = { resultsOnly: true, target };
+        } else if (action === "shared-level" && context.kind === "year") {
+          const levelIndex = Number(target.value);
+          context.presetState.inputs[subjectIndex].levelIndices = [levelIndex, levelIndex];
+          renderOptions = { resultsOnly: true, target };
+        } else if (action === "semester-level" && context.kind === "year") {
+          const semesterIndex = Number(target.dataset.semesterIndex);
+          if (!SEMESTERS[semesterIndex]) return;
+          context.presetState.inputs[subjectIndex].levelIndices[semesterIndex] = Number(target.value);
+          context.presetState.inputs[subjectIndex].separateLevels = true;
           renderOptions = { resultsOnly: true, target };
         } else if (action === "score" && context.kind === "single") {
           context.presetState.inputs[subjectIndex].scoreIndex = target.value === "" ? null : Number(target.value);
@@ -1087,6 +1282,7 @@
     semesterInputs,
     calculationEntries,
     shsidWeightedMaximumForState,
+    renderCumulativeWorkspace,
     renderResults,
     courseCategory,
     orderedSubjectEntries
