@@ -530,7 +530,7 @@
     const action = isSeparate ? "merge-levels" : "split-levels";
     const label = isSeparate
       ? "Use same level"
-      : '<span aria-hidden="true">!</span> Different Level in S2';
+      : '<span aria-hidden="true">→</span> Different Level in S2?';
     const ariaLabel = isSeparate
       ? `Use the Semester 1 level for both semesters of ${courseName}`
       : `Use a different Semester 2 level for ${courseName}`;
@@ -803,7 +803,7 @@
           <div>
             <p class="section-label">Up to eight semesters</p>
             <h2 id="cumulative-heading">Cumulative GPA</h2>
-            <p>Semesters are calculated separately, then averaged. Changed levels midyear? Use “! Different Level in S2” on that course.</p>
+            <p>Semesters are calculated separately, then averaged. Changed levels midyear? Use “→ Different Level in S2?” on that course.</p>
           </div>
           <div class="cumulative-actions">
             ${availableGrades.length > 0 ? `
