@@ -347,19 +347,19 @@
       preset("stockshsidgrade11-2m2-1m3", "Grade 11", {
         grade: 11,
         track: "ap-a-level",
-        subtitle: "AP/A-Level · two science modules",
+        subtitle: "2× M1 + 1× M2",
         subjectComputeGroups: apScheduleTwoSciences
       }),
       preset("stockshsidgrade11-1m2-1m3-1m45", "Grade 11", {
         grade: 11,
         track: "ap-a-level",
-        subtitle: "AP/A-Level · one science + one elective",
+        subtitle: "1× M1 + M2 + M3/4",
         subjectComputeGroups: apScheduleOneScienceCombined
       }),
       preset("stockshsidgrade11-1m2-1m3-1m4-1m5", "Grade 11", {
         grade: 11,
         track: "ap-a-level",
-        subtitle: "AP/A-Level · one science + two electives",
+        subtitle: "1× M1 + M2 + M3 + M4",
         subjectComputeGroups: apScheduleOneScienceTwoElectives
       }),
       preset("stockshsidgrade11-ib", "Grade 11", {
@@ -393,19 +393,19 @@
       preset("stockshsidgrade12-2m2-1m3", "Grade 12", {
         grade: 12,
         track: "ap-a-level",
-        subtitle: "AP/A-Level · two science modules",
+        subtitle: "2× M1 + 1× M2",
         subjectComputeGroups: apScheduleTwoSciences
       }),
       preset("stockshsidgrade12-1m2-1m3-1m45", "Grade 12", {
         grade: 12,
         track: "ap-a-level",
-        subtitle: "AP/A-Level · one science + one elective",
+        subtitle: "1× M1 + M2 + M3/4",
         subjectComputeGroups: apScheduleOneScienceCombined
       }),
       preset("stockshsidgrade12-1m2-1m3-1m4-1m5", "Grade 12", {
         grade: 12,
         track: "ap-a-level",
-        subtitle: "AP/A-Level · one science + two electives",
+        subtitle: "1× M1 + M2 + M3 + M4",
         subjectComputeGroups: apScheduleOneScienceTwoElectives
       }),
       preset("stockshsidgrade12-ibee", "Grade 12", {

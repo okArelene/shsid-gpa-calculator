@@ -34,6 +34,22 @@ test("loads every Swift preset", () => {
   ]);
 });
 
+test("Grade 11 and 12 schedule labels use the original module notation", () => {
+  const expectedBySuffix = new Map([
+    ["2m2-1m3", "2× M1 + 1× M2"],
+    ["1m2-1m3-1m45", "1× M1 + M2 + M3/4"],
+    ["1m2-1m3-1m4-1m5", "1× M1 + M2 + M3 + M4"]
+  ]);
+
+  for (const grade of [11, 12]) {
+    for (const [suffix, expected] of expectedBySuffix) {
+      const currentPreset = calculator.getPresetById(`stockshsidgrade${grade}-${suffix}`);
+      assert.equal(currentPreset.subtitle, expected);
+      assert.doesNotMatch(currentPreset.subtitle, /science module|elective/i);
+    }
+  }
+});
+
 test("derives stable absolute GPA scale ceilings from the local catalog", () => {
   assert.deepEqual(calculator.GPA_SCALE_MAXIMA, {
     shsidWeighted: calculator.SHSID_WEIGHTED_SCHOOL_MAXIMUM.gpa,
