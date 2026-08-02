@@ -13,8 +13,9 @@ The interface adopts the useful ideas from [GPA Calculator 3](https://github.com
 - SHSID weighted GPA from course points and credits
 - US-style unweighted GPA with equal course weighting
 - UC unweighted, capped weighted, and uncapped weighted estimates
+- A per-semester `W / UW` breakdown for weighted and unweighted GPA
 - Automatic Grade 10–11 A–G inclusion indicators and international AP/IB honors treatment
-- Independent duplicate course slots, local autosave, light/dark themes, and mobile layouts
+- Independent duplicate course slots, local autosave, a light-first theme with a remembered dark toggle, and mobile layouts
 - A consistent visual course order: Chinese, English, Maths, natural sciences, then other electives
 - A compact editorial interface with restrained motion and result-only updates during grade entry
 

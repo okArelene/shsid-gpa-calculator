@@ -156,16 +156,12 @@
     return true;
   }
 
-  function preferredTheme() {
-    return global.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-
   function createDefaultState() {
     return {
       version: 3,
       mode: "single",
       scoreFormat: "percentage",
-      theme: preferredTheme(),
+      theme: "light",
       singlePresetId: "stockshsidgrade10",
       byPreset: Object.fromEntries(presets.map((currentPreset) => [
         currentPreset.id,
@@ -752,11 +748,23 @@
           <summary><span>Breakdown</span><span class="details-toggle-icon" aria-hidden="true"></span></summary>
           <div class="math-body">
             ${totals.semesterResults.length > 0 ? `
-              <div class="semester-results">
-                ${totals.semesterResults.map((semester) => `
-                  <div><span>${escapeHtml(semester.label ?? "Semester")}</span><strong>${formatGPA(semester.weightedGPA)}</strong></div>
-                `).join("")}
-              </div>
+              <table class="semester-results">
+                <caption class="sr-only">Semester weighted and unweighted GPA breakdown</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Semester</th>
+                    <th scope="col"><span aria-label="Weighted GPA, then unweighted GPA">W / UW</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${totals.semesterResults.map((semester) => `
+                    <tr>
+                      <th scope="row">${escapeHtml(semester.label ?? "Semester")}</th>
+                      <td><strong>${formatGPA(semester.weightedGPA)} <span aria-hidden="true">/</span> ${formatGPA(semester.unweightedGPA)}</strong></td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
             ` : ""}
             <dl>
               <div><dt>Semesters counted</dt><dd>${totals.semesterCount}</dd></div>

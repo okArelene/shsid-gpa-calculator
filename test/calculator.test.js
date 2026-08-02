@@ -63,6 +63,21 @@ test("method section documents local credits and both UC resources", () => {
   assert.match(pageHtml, /gpa-requirement\.html/);
 });
 
+test("new sessions default to light theme", () => {
+  assert.equal(calculator.createDefaultState().theme, "light");
+});
+
+test("breakdown pairs weighted and unweighted semester GPAs", () => {
+  const state = calculator.createDefaultState();
+  const presetState = state.byPreset[state.singlePresetId];
+  presetState.inputs[0] = { levelIndex: 4, scoreIndex: 7 };
+  const results = calculator.renderResults(state);
+
+  assert.match(results, /Semester weighted and unweighted GPA breakdown/);
+  assert.match(results, />W \/ UW</);
+  assert.match(results, /4\.500 <span aria-hidden="true">\/<\/span> 4\.000/);
+});
+
 test("derives stable absolute GPA scale ceilings from the local catalog", () => {
   assert.deepEqual(calculator.GPA_SCALE_MAXIMA, {
     shsidWeighted: calculator.SHSID_WEIGHTED_SCHOOL_MAXIMUM.gpa,
@@ -285,6 +300,10 @@ test("cumulative GPA is the arithmetic mean of entered semester GPAs", () => {
   assert.equal(totals.semesterCount, 2);
   assert.equal(calculator.formatGPA(totals.weightedGPA), "3.700");
   assert.deepEqual(totals.semesterResults.map((semester) => semester.label), ["G9 S1", "G10 S2"]);
+  assert.deepEqual(
+    totals.semesterResults.map((semester) => calculator.formatGPA(semester.unweightedGPA)),
+    ["4.000", "3.000"]
+  );
 });
 
 test("blank semesters are excluded from the cumulative divisor", () => {

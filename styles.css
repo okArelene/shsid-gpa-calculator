@@ -1430,10 +1430,11 @@ select:active {
 }
 
 .semester-results {
+  width: 100%;
   margin-bottom: 12px;
+  border-collapse: collapse;
 }
 
-.semester-results > div,
 .math-body dl > div {
   display: flex;
   justify-content: space-between;
@@ -1441,6 +1442,47 @@ select:active {
   padding: 6px 0;
   color: var(--result-muted);
   font-size: 0.66rem;
+}
+
+.semester-results th,
+.semester-results td {
+  padding: 6px 0;
+  font-size: 0.66rem;
+}
+
+.semester-results thead th {
+  padding-top: 0;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--result-line);
+  color: var(--result-muted);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  font-weight: 680;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.semester-results th:first-child {
+  text-align: left;
+}
+
+.semester-results thead th:last-child,
+.semester-results td {
+  text-align: right;
+}
+
+.semester-results tbody th {
+  padding-right: 12px;
+  color: var(--result-muted);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.semester-results td {
+  color: var(--result-text);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .semester-results strong,
