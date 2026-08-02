@@ -7,9 +7,9 @@
     <meta name="description" content="A private SHSID semester, cumulative, unweighted, and UC GPA calculator.">
     <title>SHSID GPA Calculator</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=2.3.2">
-    <script src="catalog.js?v=2.3.2" defer></script>
-    <script src="app.js?v=2.3.2" defer></script>
+    <link rel="stylesheet" href="styles.css?v=2.3.3">
+    <script src="catalog.js?v=2.3.3" defer></script>
+    <script src="app.js?v=2.3.3" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#calculator-workspace">Skip to calculator</a>
@@ -69,22 +69,28 @@
             <span>01</span>
             <div>
               <h3>SHSID weighted</h3>
-              <p>Each semester uses the original course credits and level adjustments. Cumulative mode averages the entered semester GPAs.</p>
+              <p>Each semester, adjusted grade points are multiplied by course credits, added together, and divided by the entered credits. Cumulative mode calculates each semester separately, then averages the entered semester GPAs.</p>
+              <p><strong>How credits are assigned.</strong> The local credit table follows the official student scheduling guideline: a course’s credits are the sum of its weekly class meetings. Each meeting under 55 minutes—including a standard 40-minute period—counts as 1 credit; each meeting lasting 55 minutes or longer counts as 1.5 credits. For example, four 40-minute meetings plus one hour-long meeting equal 5.5 credits.</p>
+              <p>See a credit that does not match your schedule? Message the developer on WeChat at <code>unbased</code>.</p>
             </div>
           </article>
           <article>
             <span>02</span>
             <div>
               <h3>US unweighted</h3>
-              <p>A = 4, B = 3, C = 2, D = 1, F = 0. Courses count equally within each semester; semester GPAs are then averaged.</p>
+              <p>Unweighted GPA policies vary by school. This calculator removes plus and minus modifiers before assigning grade points: A = 4, B = 3, C = 2, D = 1, F = 0. Every entered course counts equally within a semester; cumulative mode then averages the entered semester GPAs.</p>
             </div>
           </article>
           <article>
             <span>03</span>
             <div>
               <h3>UC estimate</h3>
-              <p>Grade 10–11 semester grades marked <strong>* A–G</strong> count automatically. AP and IB levels receive eligible international honors points; school H/H+ and A-Level do not.</p>
-              <a href="https://admission.universityofcalifornia.edu/admission-requirements/first-year-requirements/gpa-requirement.html" target="_blank" rel="noreferrer">Official UC rule ↗</a>
+              <p>Honors points raise the weighted UC GPA. Grade 10–11 semester grades marked <strong>* A–G</strong> count automatically, and eligible AP or IB courses earn one honors point for each A, B, or C semester grade. The capped calculation allows up to 8 honors points across Grades 10–11, including no more than 4 from Grade 10; the calculator adds them automatically.</p>
+              <p><strong>Check your range.</strong> Compare your cumulative Grade 10–11 UC capped weighted GPA with the <em>Admit GPA range</em> in UC’s freshman admission dashboard. Select the campus or school and major or discipline that match your search. Use the result as context, not as an admission prediction.</p>
+              <div class="method-link-row">
+                <a href="https://www.universityofcalifornia.edu/about-us/information-center/freshman-admission-discipline" target="_blank" rel="noopener noreferrer">Freshman admission by discipline ↗</a>
+                <a href="https://admission.universityofcalifornia.edu/admission-requirements/first-year-requirements/gpa-requirement.html" target="_blank" rel="noopener noreferrer">Official UC rule ↗</a>
+              </div>
             </div>
           </article>
         </div>

@@ -1531,6 +1531,31 @@ select:active {
   line-height: 1.62;
 }
 
+.method-list p + p {
+  margin-top: 9px;
+}
+
+.method-list p strong {
+  color: var(--ink);
+}
+
+.method-list code {
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--ink);
+  background: var(--surface-soft);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.method-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 22px;
+  margin-top: 6px;
+}
+
 .method-list a {
   display: inline-flex;
   align-items: center;
@@ -1540,6 +1565,10 @@ select:active {
   font-size: 0.75rem;
   font-weight: 680;
   text-underline-offset: 3px;
+}
+
+.method-list .method-link-row a {
+  margin-top: 0;
 }
 
 .catalog-note {

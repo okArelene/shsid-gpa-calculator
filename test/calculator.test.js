@@ -1,6 +1,9 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const test = require("node:test");
 const calculator = require("../app.js");
+
+const pageHtml = fs.readFileSync(new URL("../index.html", `file://${__filename}`), "utf8");
 
 function inputFor(preset, levelIndex, scoreIndex) {
   return preset.subjects.map(() => ({ levelIndex, scoreIndex }));
@@ -48,6 +51,16 @@ test("Grade 11 and 12 schedule labels use the original module notation", () => {
       assert.doesNotMatch(currentPreset.subtitle, /science module|elective/i);
     }
   }
+});
+
+test("method section documents local credits and both UC resources", () => {
+  assert.match(pageHtml, /under 55 minutes/);
+  assert.match(pageHtml, /55 minutes or longer/);
+  assert.match(pageHtml, /unbased/);
+  assert.match(pageHtml, /removes plus and minus modifiers/);
+  assert.match(pageHtml, /up to 8 honors points/);
+  assert.match(pageHtml, /freshman-admission-discipline/);
+  assert.match(pageHtml, /gpa-requirement\.html/);
 });
 
 test("derives stable absolute GPA scale ceilings from the local catalog", () => {
