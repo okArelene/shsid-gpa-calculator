@@ -39,9 +39,9 @@ test("loads every Swift preset", () => {
 
 test("Grade 11 and 12 schedule labels use the original module notation", () => {
   const expectedBySuffix = new Map([
-    ["2m2-1m3", "2× M1 + 1× M2"],
-    ["1m2-1m3-1m45", "1× M1 + M2 + M3/4"],
-    ["1m2-1m3-1m4-1m5", "1× M1 + M2 + M3 + M4"]
+    ["2m2-1m3", "AP/A-Level · 2× M1 + 1× M2"],
+    ["1m2-1m3-1m45", "AP/A-Level · 1× M1 + M2 + M3/4"],
+    ["1m2-1m3-1m4-1m5", "AP/A-Level · 1× M1 + M2 + M3 + M4"]
   ]);
 
   for (const grade of [11, 12]) {

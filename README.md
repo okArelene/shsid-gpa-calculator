@@ -35,7 +35,7 @@ When an official SHSID schedule changes, update `catalog.js` deliberately and up
 - **US unweighted:** plus and minus modifiers are removed before assigning A = 4, B = 3, C = 2, D = 1, F = 0; all entered courses count equally.
 - **Cumulative:** calculates Semester 1 and Semester 2 independently for every added year, then takes the arithmetic mean of the entered semester GPAs. Blank semesters are excluded.
 - **UC estimate:** uses the actual entered Grade 10–11 semester grades for catalog-marked A–G courses, ignores plus/minus, caps honors at 8 semesters total and 4 in Grade 10, and awards international honors points only to AP/IB levels. A–G inclusion and honors treatment are automatic; there is no user override. See [UC's official GPA guidance](https://admission.universityofcalifornia.edu/admission-requirements/first-year-requirements/gpa-requirement.html) and the [freshman admission by discipline dashboard](https://www.universityofcalifornia.edu/about-us/information-center/freshman-admission-discipline).
-- **UC capped maximum:** 4.333 is the highest complete Grade 10–11 combination derivable from the local SHSID catalog: 24 counted A–G semester grades with all 8 honors points. The maximizing Grade 11 schedule is “1× M1 + M2 + M3/4” with Computer Skills excluded automatically as non-A–G.
+- **UC capped maximum:** 4.333 is the highest complete Grade 10–11 combination derivable from the local SHSID catalog: 24 counted A–G semester grades with all 8 honors points. The maximizing Grade 11 schedule is “AP/A-Level · 1× M1 + M2 + M3/4” with Computer Skills excluded automatically as non-A–G.
 
 The site is a planning tool, not an official transcript or admissions prediction.
 
