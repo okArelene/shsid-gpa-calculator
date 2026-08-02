@@ -405,7 +405,7 @@ test("cumulative UI discloses separate level controls only when requested", () =
   const presetState = year.byPreset[year.presetId];
 
   const sharedHtml = calculator.renderCumulativeWorkspace(state);
-  assert.match(sharedHtml, /Different in S2/);
+  assert.match(sharedHtml, /aria-hidden="true">!<\/span> Different Level in S2/);
   assert.doesNotMatch(sharedHtml, /aria-label="Semester 2 level for History"/);
 
   presetState.inputs[3] = {
