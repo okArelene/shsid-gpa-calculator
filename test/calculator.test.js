@@ -475,6 +475,22 @@ test("cumulative UI discloses separate level controls only when requested", () =
   assert.match(splitHtml, /UC \+1 S2/);
 });
 
+test("cumulative year motion stays scoped to the expanding course body", () => {
+  const state = calculator.createDefaultState();
+  state.mode = "cumulative";
+  const cumulativeHtml = calculator.renderCumulativeWorkspace(state);
+
+  assert.match(cumulativeHtml, /class="year-body-motion"/);
+  assert.match(
+    stylesCss,
+    /\.year-body-motion \{[\s\S]*?grid-template-rows: 1fr;[\s\S]*?240ms/
+  );
+  assert.match(
+    stylesCss,
+    /\.year-body-motion\.is-collapsed \{[\s\S]*?grid-template-rows: 0fr;[\s\S]*?180ms/
+  );
+});
+
 test("each cumulative year expands into two calculation entries", () => {
   const state = calculator.createDefaultState();
   state.mode = "cumulative";

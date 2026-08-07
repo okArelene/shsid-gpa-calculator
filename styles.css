@@ -1212,6 +1212,38 @@ select:active {
   transform: rotate(-90deg);
 }
 
+.year-body-motion {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 240ms var(--ease-out);
+}
+
+.year-body-motion > .year-body {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateY(0);
+  transform-origin: top;
+  transition:
+    opacity 180ms 30ms var(--ease-out),
+    transform 240ms var(--ease-out);
+}
+
+.year-body-motion.is-collapsed {
+  grid-template-rows: 0fr;
+  transition-duration: 180ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.year-body-motion.is-collapsed > .year-body {
+  opacity: 0;
+  transform: translateY(-5px);
+  transition-duration: 140ms, 180ms;
+  transition-delay: 0ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
 .year-actions {
   display: flex;
   align-items: center;

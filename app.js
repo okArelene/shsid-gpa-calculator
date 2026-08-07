@@ -771,21 +771,23 @@
     `;
   }
 
-  function renderYearBody(year, state) {
+  function renderYearBody(year, state, collapsedForMotion = false) {
     const currentPreset = getPresetById(year.presetId);
     const presetState = getYearPresetState(year);
 
     return `
-      <div class="year-body">
-        ${presetsForGrade(year.grade).length > 1 ? `
-          <label class="select-field year-schedule-field">
-            <span>Schedule</span>
-            <select data-action="year-preset" data-year-grade="${year.grade}">
-              ${yearPresetOptions(year.grade, currentPreset.id)}
-            </select>
-          </label>
-        ` : ""}
-        ${renderCourseList(currentPreset, presetState, state, "year", year.grade, true)}
+      <div class="year-body-motion${collapsedForMotion ? " is-collapsed" : ""}"${collapsedForMotion ? ' aria-hidden="true" inert' : ""}>
+        <div class="year-body">
+          ${presetsForGrade(year.grade).length > 1 ? `
+            <label class="select-field year-schedule-field">
+              <span>Schedule</span>
+              <select data-action="year-preset" data-year-grade="${year.grade}">
+                ${yearPresetOptions(year.grade, currentPreset.id)}
+              </select>
+            </label>
+          ` : ""}
+          ${renderCourseList(currentPreset, presetState, state, "year", year.grade, true)}
+        </div>
       </div>
     `;
   }
@@ -1129,6 +1131,36 @@
     }
   }
 
+  const yearBodyMotions = new WeakMap();
+
+  function beginYearBodyMotion(yearSection) {
+    yearBodyMotions.get(yearSection)?.cleanup?.();
+    const motion = { cleanup: null };
+    yearBodyMotions.set(yearSection, motion);
+    return motion;
+  }
+
+  function settleYearBodyMotion(yearSection, bodyMotion, year, motion) {
+    let timeoutId;
+    const cleanup = () => {
+      bodyMotion.removeEventListener("transitionend", finish);
+      if (timeoutId !== undefined && typeof global.clearTimeout === "function") {
+        global.clearTimeout(timeoutId);
+      }
+    };
+    const finish = (event) => {
+      if (event && (event.target !== bodyMotion || event.propertyName !== "grid-template-rows")) return;
+      cleanup();
+      if (yearBodyMotions.get(yearSection) !== motion) return;
+      yearBodyMotions.delete(yearSection);
+      if (year.collapsed) bodyMotion.remove();
+    };
+
+    motion.cleanup = cleanup;
+    bodyMotion.addEventListener("transitionend", finish);
+    if (typeof global.setTimeout === "function") timeoutId = global.setTimeout(finish, 320);
+  }
+
   function updateYearCollapse(documentRef, state, year, toggle) {
     const yearSection = toggle.closest(".year-section");
     if (!yearSection) {
@@ -1139,11 +1171,39 @@
     yearSection.classList.toggle("is-collapsed", year.collapsed);
     toggle.setAttribute("aria-expanded", String(!year.collapsed));
 
-    const yearBody = yearSection.querySelector(".year-body");
+    const shouldAnimate = motionAllowed();
+    const motion = beginYearBodyMotion(yearSection);
+    let bodyMotion = yearSection.querySelector(".year-body-motion");
+
     if (year.collapsed) {
-      yearBody?.remove();
-    } else if (!yearBody) {
-      yearSection.insertAdjacentHTML("beforeend", renderYearBody(year, state));
+      if (bodyMotion && shouldAnimate) {
+        bodyMotion.setAttribute("aria-hidden", "true");
+        bodyMotion.setAttribute("inert", "");
+        bodyMotion.classList.add("is-collapsed");
+        settleYearBodyMotion(yearSection, bodyMotion, year, motion);
+      } else {
+        bodyMotion?.remove();
+        yearBodyMotions.delete(yearSection);
+      }
+    } else {
+      const insertedBody = !bodyMotion;
+      if (insertedBody) {
+        yearSection.insertAdjacentHTML("beforeend", renderYearBody(year, state, shouldAnimate));
+        bodyMotion = yearSection.querySelector(".year-body-motion");
+      }
+
+      if (bodyMotion) {
+        bodyMotion.removeAttribute("aria-hidden");
+        bodyMotion.removeAttribute("inert");
+        if (shouldAnimate) {
+          if (insertedBody) bodyMotion.getBoundingClientRect();
+          bodyMotion.classList.remove("is-collapsed");
+          settleYearBodyMotion(yearSection, bodyMotion, year, motion);
+        } else {
+          bodyMotion.classList.remove("is-collapsed");
+          yearBodyMotions.delete(yearSection);
+        }
+      }
     }
 
     documentRef.getElementById("live-status").textContent = `Grade ${year.grade} ${year.collapsed ? "collapsed" : "expanded"}.`;
