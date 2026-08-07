@@ -771,6 +771,25 @@
     `;
   }
 
+  function renderYearBody(year, state) {
+    const currentPreset = getPresetById(year.presetId);
+    const presetState = getYearPresetState(year);
+
+    return `
+      <div class="year-body">
+        ${presetsForGrade(year.grade).length > 1 ? `
+          <label class="select-field year-schedule-field">
+            <span>Schedule</span>
+            <select data-action="year-preset" data-year-grade="${year.grade}">
+              ${yearPresetOptions(year.grade, currentPreset.id)}
+            </select>
+          </label>
+        ` : ""}
+        ${renderCourseList(currentPreset, presetState, state, "year", year.grade, true)}
+      </div>
+    `;
+  }
+
   function renderYearCard(year, state) {
     const currentPreset = getPresetById(year.presetId);
     const presetState = getYearPresetState(year);
@@ -796,19 +815,7 @@
           </div>
         </div>
 
-        ${year.collapsed ? "" : `
-          <div class="year-body">
-            ${presetsForGrade(year.grade).length > 1 ? `
-              <label class="select-field year-schedule-field">
-                <span>Schedule</span>
-                <select data-action="year-preset" data-year-grade="${year.grade}">
-                  ${yearPresetOptions(year.grade, currentPreset.id)}
-                </select>
-              </label>
-            ` : ""}
-            ${renderCourseList(currentPreset, presetState, state, "year", year.grade, true)}
-          </div>
-        `}
+        ${year.collapsed ? "" : renderYearBody(year, state)}
       </section>
     `;
   }
@@ -1122,6 +1129,26 @@
     }
   }
 
+  function updateYearCollapse(documentRef, state, year, toggle) {
+    const yearSection = toggle.closest(".year-section");
+    if (!yearSection) {
+      renderApp(documentRef, state);
+      return;
+    }
+
+    yearSection.classList.toggle("is-collapsed", year.collapsed);
+    toggle.setAttribute("aria-expanded", String(!year.collapsed));
+
+    const yearBody = yearSection.querySelector(".year-body");
+    if (year.collapsed) {
+      yearBody?.remove();
+    } else if (!yearBody) {
+      yearSection.insertAdjacentHTML("beforeend", renderYearBody(year, state));
+    }
+
+    documentRef.getElementById("live-status").textContent = `Grade ${year.grade} ${year.collapsed ? "collapsed" : "expanded"}.`;
+  }
+
   function bindUI(documentRef) {
     let state = loadState();
     const persistAndRender = (options = {}) => {
@@ -1193,6 +1220,9 @@
         const year = state.cumulativeYears.find((item) => item.grade === grade);
         if (!year) return;
         year.collapsed = !year.collapsed;
+        saveState(state);
+        updateYearCollapse(documentRef, state, year, target);
+        return;
       } else if (action === "add-year") {
         const grade = Number(target.dataset.yearGrade);
         if (!addCumulativeYear(state, grade)) return;
@@ -1221,7 +1251,7 @@
       } else {
         return;
       }
-      persistAndRender({ animateWorkspace: action === "toggle-year" || action === "remove-year" });
+      persistAndRender({ animateWorkspace: action === "remove-year" });
     });
 
     documentRef.body.addEventListener("change", (event) => {
