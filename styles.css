@@ -984,13 +984,21 @@ select:active {
     }
 
     select {
+      position: relative;
+      display: flex;
       align-items: center;
-      padding: 0 9px 0 11px;
+      padding: 0 34px 0 11px;
     }
 
     select::picker-icon {
-      margin-left: auto;
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      width: 12px;
+      margin: 0;
       color: var(--muted);
+      pointer-events: none;
+      transform: translateY(-50%);
       transition: color 90ms ease-out, transform 120ms var(--ease-out);
     }
 
@@ -1000,7 +1008,7 @@ select:active {
     }
 
     select:open::picker-icon {
-      transform: rotate(180deg);
+      transform: translateY(-50%) rotate(180deg);
     }
 
     select:open {

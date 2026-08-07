@@ -4,6 +4,7 @@ const test = require("node:test");
 const calculator = require("../app.js");
 
 const pageHtml = fs.readFileSync(new URL("../index.html", `file://${__filename}`), "utf8");
+const stylesCss = fs.readFileSync(new URL("../styles.css", `file://${__filename}`), "utf8");
 
 function inputFor(preset, levelIndex, scoreIndex) {
   return preset.subjects.map(() => ({ levelIndex, scoreIndex }));
@@ -73,6 +74,13 @@ test("footer credits the original calculator and updated web rules", () => {
 test("mobile viewport keeps zoom available and supports iPhone safe areas", () => {
   assert.match(pageHtml, /width=device-width, initial-scale=1, viewport-fit=cover/);
   assert.doesNotMatch(pageHtml, /user-scalable=no|maximum-scale=1/);
+});
+
+test("Chrome base-select keeps its picker icon in the control row", () => {
+  assert.match(
+    stylesCss,
+    /select::picker-icon \{[\s\S]*?position: absolute;[\s\S]*?right: 10px;/
+  );
 });
 
 test("new sessions default to light theme", () => {
