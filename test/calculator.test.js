@@ -70,6 +70,11 @@ test("footer credits the original calculator and updated web rules", () => {
   assert.match(pageHtml, /Web edition with updated rules by Tom Ding ’27/);
 });
 
+test("mobile viewport keeps zoom available and supports iPhone safe areas", () => {
+  assert.match(pageHtml, /width=device-width, initial-scale=1, viewport-fit=cover/);
+  assert.doesNotMatch(pageHtml, /user-scalable=no|maximum-scale=1/);
+});
+
 test("new sessions default to light theme", () => {
   const state = calculator.createDefaultState();
   assert.equal(state.theme, "light");
@@ -444,6 +449,9 @@ test("cumulative UI discloses separate level controls only when requested", () =
 
   const sharedHtml = calculator.renderCumulativeWorkspace(state);
   assert.match(sharedHtml, /aria-hidden="true">→<\/span> Different Level in S2\?/);
+  assert.match(sharedHtml, /mobile-control-label" aria-hidden="true">Level/);
+  assert.match(sharedHtml, /mobile-control-label" aria-hidden="true">S1 grade/);
+  assert.match(sharedHtml, /mobile-control-label" aria-hidden="true">S2 grade/);
   assert.doesNotMatch(sharedHtml, /aria-label="Semester 2 level for History"/);
 
   presetState.inputs[3] = {

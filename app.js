@@ -613,6 +613,7 @@
       return `
         <fieldset class="level-control is-semester-specific">
           <legend class="sr-only">Levels for ${escapeHtml(courseName)}</legend>
+          <span class="mobile-control-label" aria-hidden="true">Level</span>
           <div class="semester-level-grid">
             ${SEMESTERS.map((_, semesterIndex) => renderSemesterLevelSelect(
               currentSubject,
@@ -635,6 +636,7 @@
       <fieldset class="level-control">
         <legend class="sr-only">Level for ${escapeHtml(courseName)}${cumulative ? " in both semesters" : ""}</legend>
         <div class="shared-level-control">
+          <span class="mobile-control-label" aria-hidden="true">Level</span>
           <div class="shared-level-choice">
             ${renderSharedLevelChoices(
               currentSubject,
@@ -654,8 +656,10 @@
   function renderGradeSelect(currentSubject, scoreIndex, state, attrs, controlId, subjectIndex, action, semesterIndex = null) {
     const semesterAttribute = semesterIndex === null ? "" : ` data-semester-index="${semesterIndex}"`;
     const gradeLabel = semesterIndex === null ? "Grade" : `Semester ${semesterIndex + 1} grade`;
+    const mobileGradeLabel = semesterIndex === null ? "Grade" : `S${semesterIndex + 1} grade`;
     return `
       <label class="grade-control" for="${controlId}">
+        <span class="mobile-control-label" aria-hidden="true">${mobileGradeLabel}</span>
         <span class="sr-only">${gradeLabel}</span>
         <select id="${controlId}" data-action="${action}" data-subject-index="${subjectIndex}"${semesterAttribute} ${attrs}>
           <option value="" ${scoreIndex === null ? "selected" : ""}>—</option>
